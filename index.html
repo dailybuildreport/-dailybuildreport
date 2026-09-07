@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ход работ нулевого цикла</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --plane:#f1f1ee; --surface:#ffffff; --surface-2:#f7f7f4;
+  --ink:#14171a; --ink-2:#565c60; --ink-3:#8a8f8b;
+  --line:#dedeD6; --line-strong:#c6c6bd;
+  --accent:#16324f; --accent-soft:#e7edf4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#c94f80; --s6:#4a3aa7;
+  --good:#0ca30c; --warn:#fab219; --warn-ink:#8a5a00; --serious:#ec835a; --crit:#d03b3b;
+  --grid:#e6e6de; --tooltip-bg:#14171a; --tooltip-ink:#ffffff;
+  --shadow:0 1px 2px rgba(20,23,26,.06), 0 8px 24px -18px rgba(20,23,26,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --plane:#0d0f0e; --surface:#191b1a; --surface-2:#202322;
+    --ink:#f2f3ef; --ink-2:#a8ada7; --ink-3:#7c817c;
+    --line:#2b2e2c; --line-strong:#3a3e3b;
+    --accent:#a9c6e4; --accent-soft:#1d2733;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#9085e9;
+    --warn-ink:#fab219; --grid:#262927; --tooltip-bg:#f2f3ef; --tooltip-ink:#14171a;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -20px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --plane:#0d0f0e; --surface:#191b1a; --surface-2:#202322;
+  --ink:#f2f3ef; --ink-2:#a8ada7; --ink-3:#7c817c;
+  --line:#2b2e2c; --line-strong:#3a3e3b;
+  --accent:#a9c6e4; --accent-soft:#1d2733;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#9085e9;
+  --warn-ink:#fab219; --grid:#262927; --tooltip-bg:#f2f3ef; --tooltip-ink:#14171a;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px -20px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--plane); color:var(--ink);
+  font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px; margin:0 auto; padding:28px 20px 64px; display:flex; flex-direction:column; gap:26px}
+h1,h2,h3{font-family:Oswald,"IBM Plex Sans",sans-serif; font-weight:500; margin:0; text-wrap:balance; letter-spacing:.01em}
+h1{font-size:34px; line-height:1.1}
+h2{font-size:19px; text-transform:uppercase; letter-spacing:.08em}
+h3{font-size:15px; letter-spacing:.04em}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3)}
+
+/* ---------- штамп ---------- */
+.stamp{
+  background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+  display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px; padding:22px 24px; box-shadow:var(--shadow);
+}
+.stamp .lede{color:var(--ink-2); margin-top:6px; max-width:62ch}
+.stamp-meta{display:grid; grid-template-columns:repeat(2,auto); gap:4px 26px; margin:0; align-content:center}
+.stamp-meta dt{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.stamp-meta dd{margin:0 0 8px; font-weight:600; font-size:14px}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
+.kpi{background:var(--surface); border:1px solid var(--line); padding:16px 18px 14px; display:flex; flex-direction:column; gap:9px; position:relative}
+.kpi::before{content:""; position:absolute; inset:0 auto 0 0; width:3px; background:var(--c)}
+.kpi .k-name{font-size:12.5px; color:var(--ink-2); font-weight:500}
+.kpi .k-val{font-family:Oswald,sans-serif; font-size:31px; line-height:1; font-weight:500; display:flex; align-items:baseline; gap:7px}
+.kpi .k-val span{font-family:"IBM Plex Sans",sans-serif; font-size:12px; font-weight:500; color:var(--ink-3)}
+.bar{height:6px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden}
+.bar i{display:block; height:100%; background:var(--c)}
+.kpi .k-sub{font-size:12px; color:var(--ink-2)}
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:2px 7px; border:1px solid currentColor; letter-spacing:.02em}
+.tag.ok{color:var(--good)} .tag.warn{color:var(--warn-ink)} .tag.crit{color:var(--crit)} .tag.neutral{color:var(--ink-3)}
+
+/* ---------- панели ---------- */
+.panel{background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow); min-width:0}
+.wrap > *, .two-col > *{min-width:0}
+.panel > header{padding:16px 20px 12px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:10px 18px; align-items:baseline; justify-content:space-between}
+.panel > header p{color:var(--ink-2); font-size:12.5px}
+.pad{padding:18px 20px 22px}
+
+/* ---------- таблицы ---------- */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse; width:100%; font-size:12.5px}
+th,td{padding:8px 10px; text-align:right; border-bottom:1px solid var(--line); white-space:nowrap}
+th{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); font-weight:500; text-align:right; vertical-align:bottom; position:sticky; top:0; background:var(--surface); z-index:2}
+th:first-child,td:first-child{text-align:left}
+td.txt,th.txt{text-align:left; white-space:normal; min-width:260px; color:var(--ink-2)}
+tbody tr:hover td{background:var(--surface-2)}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.dot{display:inline-block; width:9px; height:9px; margin-right:7px; vertical-align:baseline}
+.minibar{min-width:168px}
+.minibar .row{display:flex; align-items:center; gap:9px}
+.minibar .track{flex:1; height:12px; background:var(--surface-2); border:1px solid var(--line)}
+.minibar .fill{height:100%; background:var(--c)}
+.minibar .pct{font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; width:54px; text-align:right; color:var(--ink)}
+
+/* ---------- графики ---------- */
+.tabs{display:flex; flex-wrap:wrap; gap:6px}
+.tabs button{
+  font:500 12px/1 "IBM Plex Sans",sans-serif; padding:7px 12px; cursor:pointer;
+  background:transparent; color:var(--ink-2); border:1px solid var(--line);
+}
+.tabs button:hover{background:var(--surface-2); color:var(--ink)}
+.tabs button[aria-selected="true"]{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+:root[data-theme="dark"] .tabs button[aria-selected="true"],
+:root:not([data-theme="light"]) .tabs button[aria-selected="true"]{color:#0d0f0e}
+.chart-box{position:relative; margin-top:8px}
+.chart-box svg{display:block; width:100%; height:auto; overflow:visible}
+.chart-legend{display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:2px}
+.lg{display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:transparent;
+    border:0; padding:2px 0; font:500 12px/1.2 "IBM Plex Sans",sans-serif; color:var(--ink)}
+.lg[aria-pressed="false"]{color:var(--ink-3)}
+.lg[aria-pressed="false"] .sw{opacity:.28}
+.lg:focus-visible{outline:2px solid var(--s1); outline-offset:3px}
+.sw{width:11px; height:11px; display:inline-block; flex:none}
+.tip{position:absolute; top:6px; left:0; pointer-events:none; opacity:0; transition:opacity .12s;
+     background:var(--tooltip-bg); color:var(--tooltip-ink); padding:9px 11px; min-width:190px;
+     font-size:12px; box-shadow:var(--shadow); z-index:3}
+.tip-t{font-family:"IBM Plex Mono",monospace; font-size:11px; opacity:.75; margin-bottom:5px}
+.tip-row{display:flex; align-items:center; gap:7px; padding:1.5px 0}
+.tip-row b{margin-left:auto; font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; font-weight:600}
+.log-scroll{max-height:520px; overflow-y:auto}
+@media (max-width:700px){.log-scroll{max-height:340px}}
+.chart-note{margin-top:12px; font-size:12px; color:var(--ink-2); border-left:2px solid var(--line-strong); padding-left:10px}
+
+/* ---------- риски ---------- */
+.risks{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px}
+.two-col{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:26px}
+.risk{border:1px solid var(--line); padding:14px 16px; display:flex; flex-direction:column; gap:7px; background:var(--surface-2)}
+.risk{border-left:4px solid var(--lvl)}
+.risk h3{font-size:14px}
+.risk p{font-size:12.5px; color:var(--ink-2)}
+
+/* ---------- хронология ---------- */
+.timeline{display:grid; gap:0}
+.tl-row{display:grid; grid-template-columns:92px 132px minmax(0,1fr); gap:14px; padding:10px 0; border-bottom:1px solid var(--line); align-items:baseline}
+.tl-row:last-child{border-bottom:0}
+.tl-date{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-2)}
+.chip{font-size:10.5px; font-family:"IBM Plex Mono",monospace; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border:1px solid var(--line-strong); color:var(--ink-2); justify-self:start}
+.tl-text{font-size:13px}
+
+/* ---------- фильтры ---------- */
+.controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.controls input{
+  font:400 12.5px/1 "IBM Plex Sans",sans-serif; padding:7px 10px; min-width:220px;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line);
+}
+.controls input:focus-visible, .tabs button:focus-visible{outline:2px solid var(--s1); outline-offset:2px}
+.legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--ink-2)}
+footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--line); padding-top:16px}
+@media (max-width:900px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .risks{grid-template-columns:1fr}
+  .stamp{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  h1{font-size:27px}
+  .wrap{padding:20px 14px 44px; gap:18px}
+}
+
+/* ---------- телефон ---------- */
+@media (max-width:700px){
+  .wrap{padding:14px 10px 36px; gap:14px}
+  h1{font-size:24px}
+  h2{font-size:16px}
+  body{font-size:13.5px}
+  .stamp{padding:16px 14px; gap:14px}
+  .stamp .lede{font-size:13px}
+  .stamp-meta{grid-template-columns:1fr 1fr; gap:2px 14px}
+  .stamp-meta dd{font-size:13px; margin-bottom:6px}
+  .panel > header{padding:13px 14px 11px; gap:8px 12px}
+  .pad{padding:13px 14px 16px}
+  .kpi{padding:13px 14px 12px; gap:7px}
+  .kpi .k-val{font-size:27px}
+  /* табы графиков — горизонтальный свайп вместо переноса */
+  #tabs, #period-tabs{flex-wrap:nowrap; overflow-x:auto; max-width:100%; padding-bottom:2px;
+                      scrollbar-width:none; -webkit-overflow-scrolling:touch}
+  #tabs::-webkit-scrollbar, #period-tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:none; padding:8px 11px}
+  .controls{width:100%}
+  .controls input{min-width:0; width:100%}
+  .chart-legend{gap:6px 12px; font-size:11.5px}
+  .tip{min-width:150px; max-width:70vw; font-size:11.5px; padding:8px 9px}
+  .chart-note{font-size:11.5px}
+  /* «Выполнение по видам работ» — карточками, без горизонтальной прокрутки */
+  #works{font-size:13px}
+  #works thead{display:none}
+  #works, #works tbody, #works tr, #works td{display:block; width:100%}
+  #works tr{border:1px solid var(--line); border-left:3px solid var(--c); padding:11px 13px; margin-bottom:10px}
+  #works tr:hover td{background:transparent}
+  #works td{border:0; padding:3px 0; text-align:left; white-space:normal;
+            display:flex; align-items:baseline; justify-content:space-between; gap:14px}
+  #works td::before{content:attr(data-label); color:var(--ink-3); font-size:10px; letter-spacing:.06em;
+                    text-transform:uppercase; font-family:"IBM Plex Mono",monospace; flex:none}
+  #works td.nm{display:block; font-size:14px; margin-bottom:6px; color:var(--ink)}
+  #works td.st{display:block; margin-top:7px; padding-top:7px; border-top:1px solid var(--line); font-size:12px}
+  #works td.minibar{min-width:0}
+  #works td.minibar .row{flex:1; margin-left:14px}
+  /* журнал и остальные таблицы — компактнее, с горизонтальным свайпом */
+  #log{font-size:11.5px}
+  #log th, #log td{padding:6px 7px}
+  td.txt, th.txt{min-width:210px}
+  #tests{font-size:11.5px}
+  .tl-row{display:block; padding:9px 0}
+  .tl-date{font-size:11.5px; margin-right:8px}
+  .chip{font-size:10px; display:inline-block; vertical-align:middle}
+  .tl-text{font-size:12.5px; display:block; margin-top:3px; overflow-wrap:anywhere}
+  .risk{padding:12px 13px}
+}
+@media (max-width:560px){ .kpis{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="stamp">
+    <div class="stamp-main">
+      <p class="eyebrow">КиКГЕОСТРОЙ / СТДВ / Таскшерингрус</p>
+      <h1>Ход работ нулевого цикла</h1>
+    </div>
+    <dl class="stamp-meta">
+      <div><dt>Отчётная дата</dt><dd class="mono" id="m-date"></dd></div>
+      <div><dt>Период наблюдения</dt><dd class="mono" id="m-period"></dd></div>
+      <div><dt>Сводок в периоде</dt><dd class="mono" id="m-count"></dd></div>
+      <div><dt>Численность, чел./сут</dt><dd class="mono">50 (ИТР 10 / раб. 40)</dd></div>
+    </dl>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="panel">
+    <header>
+      <div><h2>Выполнение по видам работ</h2></div>
+    </header>
+    <div class="pad scroll">
+      <table id="works">
+        <thead><tr>
+          <th class="txt">Вид работ</th><th>Ед.</th><th>Всего</th><th>Выполнено</th><th>Остаток</th>
+          <th style="min-width:150px">Выполнение</th><th>Прирост за период</th><th class="txt">Статус</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <div><h2>Динамика</h2></div>
+      <div class="tabs" id="tabs" role="tablist"></div>
+    </header>
+    <div class="pad">
+      <div class="chart-legend" id="chart-legend"></div>
+      <div class="chart-box" id="chart-box"><div class="tip" id="tip" role="status" aria-live="polite"></div></div>
+      <p class="chart-note" id="chart-note"></p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header>
+      <div><h2>Журнал показателей по дням</h2></div>
+      <div class="controls">
+        <div class="tabs" id="period-tabs" role="tablist"></div>
+        <input id="q" type="search" placeholder="Поиск по комментариям…" aria-label="Поиск по комментариям">
+      </div>
+    </header>
+    <div class="pad scroll log-scroll">
+      <table id="log">
+        <thead><tr>
+          <th>Дата</th><th>Грунт, %</th><th>Вывоз за сут., м³</th><th>Самосвалы д/н</th>
+          <th>Форшахта, %</th><th>СВГ, %</th><th>Захваток</th><th>СВГ, м³</th>
+          <th>БНС, шт</th><th>Каркасов</th><th>Отст., дн.</th><th class="txt">Комментарий</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <header><div><h2>Риски и точки внимания</h2></div></header>
+    <div class="pad"><div class="risks" id="risks"></div></div>
+  </section>
+
+  <div class="two-col">
+    <section class="panel">
+      <header><div><h2>Хронология событий</h2><p>Что изменилось за период.</p></div></header>
+      <div class="pad"><div class="timeline" id="timeline"></div></div>
+    </section>
+
+    <section class="panel">
+      <header><div><h2>Испытания свай</h2><p>Завершены полностью: ОК 4/4, АН 12/12, ОП 4/4. Отчёт получен 24.08.2026.</p></div></header>
+      <div class="pad scroll">
+        <table id="tests">
+          <thead><tr><th>Свая</th><th>Куст</th><th>Период</th><th>Ступень</th><th style="min-width:150px">Нагрузка, т</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="chart-note" id="tests-note"></p>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<script>
+const DATA = {"rows": [{"d": "2026-07-28", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 0, "trk_n": 0, "soil_pct": 67.1, "soil_loose": 31770, "soil_solid": 21045.0, "soil_day": 0, "fs_pct": 57.7, "fs_m3": 206.77, "fs_pm": 150.23, "dw_pct": 34.0, "dw_zah": 15, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "Вывоз грунта возобновлён с утра 28.07.26. Экскавация захватки №18."}, {"d": "2026-07-29", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 4, "trk_n": 0, "soil_pct": 67.6, "soil_loose": 32026, "soil_solid": 21209.0, "soil_day": 256, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 34.0, "dw_zah": 15, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "Малый темп вывоза. Армирование захватки №18. Начало испытания ОК 4.12."}, {"d": "2026-07-30", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 4, "trk_n": 4, "soil_pct": 68.8, "soil_loose": 32578, "soil_solid": 21574.0, "soil_day": 552, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 36.36, "dw_zah": 16, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "Захватка №18 выполнена. Армирование захватки №25."}, {"d": "2026-07-31", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 7, "trk_n": 5, "soil_pct": 70.1, "soil_loose": 33162, "soil_solid": 21961.0, "soil_day": 584, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 38.6, "dw_zah": 17, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "+1 буровая установка и ямобур. Требуется актуализация срока по грунту."}, {"d": "2026-08-03", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 9, "trk_n": 6, "soil_pct": 75.42, "soil_loose": 35696, "soil_solid": 23639.0, "soil_day": 2534, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 40.9, "dw_zah": 18, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "Максимальный суточный вывоз грунта за период (за выходные). Испытание ОК 4.12 завершено 01.08."}, {"d": "2026-08-04", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 8, "trk_n": 17, "soil_pct": 75.87, "soil_loose": 35908, "soil_solid": 23780.0, "soil_day": 212, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 40.9, "dw_zah": 18, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "В отчёте указан прирост +1010 м3, фактическая разница с 03.08 — 212 м3 (расхождение отчёта)."}, {"d": "2026-08-05", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 5, "trk_n": 11, "soil_pct": 77.7, "soil_loose": 36776, "soil_solid": 24354.0, "soil_day": 868, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 43.18, "dw_zah": 19, "dw_m3": null, "bns_list": null, "bns_rep": null, "cages": null, "lag": null, "note": "Срок завершения работ по грунту перенесён на 11.08.26."}, {"d": "2026-08-06", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 5, "trk_n": 0, "soil_pct": 78.48, "soil_loose": 37140, "soil_solid": 24596.0, "soil_day": 364, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 43.18, "dw_zah": 19, "dw_m3": 2894.0, "bns_list": 0, "bns_rep": 20, "cages": 0, "lag": null, "note": "Буровые работы по рабочим БНС не начаты; армокаркасы ожидаются с завода. Испытание ОП 4.12 остановлено при осадке >43 мм."}, {"d": "2026-08-07", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 4, "trk_n": 0, "soil_pct": 79.08, "soil_loose": 37428, "soil_solid": 24786.0, "soil_day": 288, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 45.45, "dw_zah": 20, "dw_m3": 3054.27, "bns_list": 0, "bns_rep": 20, "cages": 1, "lag": null, "note": "Доставлен 1-й армокаркас БНС, начато бурение ствола скважины."}, {"d": "2026-08-10", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 14, "soil_pct": 83.26, "soil_loose": 39406, "soil_solid": 26096.0, "soil_day": 1978, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 47.7, "dw_zah": 21, "dw_m3": 3197.74, "bns_list": 2, "bns_rep": 22, "cages": 5, "lag": null, "note": "Выполнены первые рабочие БНС: СР20, СР21. Начало испытаний ОП 3.12."}, {"d": "2026-08-11", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 4, "trk_n": 0, "soil_pct": 83.82, "soil_loose": 39670, "soil_solid": 26271.0, "soil_day": 264, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 47.7, "dw_zah": 21, "dw_m3": 3197.74, "bns_list": 3, "bns_rep": 19, "cages": 5, "lag": null, "note": "Плановый срок по грунту (11.08) не выдержан. В отчёте 'факт 19 шт' — ниже предыдущего значения (расхождение отчёта)."}, {"d": "2026-08-12", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 0, "soil_pct": 84.14, "soil_loose": 39822, "soil_solid": 26372.0, "soil_day": 152, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 50.0, "dw_zah": 22, "dw_m3": 3358.0, "bns_list": 4, "bns_rep": 20, "cages": 5, "lag": null, "note": "Выполнено 50% захваток СВГ."}, {"d": "2026-08-13", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 6, "trk_n": 0, "soil_pct": 84.56, "soil_loose": 40020, "soil_solid": 26503.3, "soil_day": 198, "fs_pct": 64.7, "fs_m3": 224.77, "fs_pm": 168.23, "dw_pct": 50.0, "dw_zah": 22, "dw_m3": 3358.0, "bns_list": 4, "bns_rep": 20, "cages": 7.5, "lag": 2, "note": "Зафиксирован срыв срока по грунту — 2 дня."}, {"d": "2026-08-14", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 0, "soil_pct": 85.0, "soil_loose": 40272, "soil_solid": 26670.2, "soil_day": 252, "fs_pct": 77.0, "fs_m3": 247.99, "fs_pm": 185.76, "dw_pct": 52.3, "dw_zah": 23, "dw_m3": 3518.27, "bns_list": 5, "bns_rep": 21, "cages": 7.5, "lag": 3, "note": "Форшахта: бетонирование участков Б-Г/5-6, ДЖ-Г/6-7. Новый плановый срок по грунту — 24.08."}, {"d": "2026-08-17", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 4, "trk_n": 0, "soil_pct": 87.7, "soil_loose": 41532, "soil_solid": 27504.6, "soil_day": 1260, "fs_pct": 77.0, "fs_m3": 247.99, "fs_pm": 185.76, "dw_pct": 54.7, "dw_zah": 24, "dw_m3": 3678.54, "bns_list": 8, "bns_rep": 24, "cages": 10, "lag": 6, "note": "Ускорение по БНС: +3 сваи за отчётный период."}, {"d": "2026-08-18", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 0, "soil_pct": 88.47, "soil_loose": 41868, "soil_solid": 27727.1, "soil_day": 336, "fs_pct": 77.0, "fs_m3": 247.99, "fs_pm": 185.76, "dw_pct": 54.7, "dw_zah": 24, "dw_m3": 3678.54, "bns_list": 9, "bns_rep": 25, "cages": 12, "lag": 7, "note": "Форшахта: устройство траншеи на участке А-В/3/1-5."}, {"d": "2026-08-20", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 6, "trk_n": 0, "soil_pct": 91.5, "soil_loose": 43315, "soil_solid": 28685.4, "soil_day": 821, "fs_pct": 77.0, "fs_m3": 247.99, "fs_pm": 185.76, "dw_pct": 57.2, "dw_zah": 25, "dw_m3": 3847.6, "bns_list": 11, "bns_rep": 27, "cages": 16, "lag": 9, "note": "Привлечён автокран 70 т. Захватка №44 СВГ выполнена."}, {"d": "2026-08-21", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 5, "trk_n": 0, "soil_pct": 92.6, "soil_loose": 43831, "soil_solid": 29027.1, "soil_day": 516, "fs_pct": 77.0, "fs_m3": 247.99, "fs_pm": 185.76, "dw_pct": 59.6, "dw_zah": 26, "dw_m3": 4007.87, "bns_list": 13, "bns_rep": 29, "cages": 18, "lag": 10, "note": "Бетонирование захватки №28 СВГ."}, {"d": "2026-08-24", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 2, "trk_n": 0, "soil_pct": 93.2, "soil_loose": 44095, "soil_solid": 29201.9, "soil_day": 264, "fs_pct": 86.0, "fs_m3": 277.0, "fs_pm": 214.76, "dw_pct": 60.8, "dw_zah": 27, "dw_m3": 4091.4, "bns_list": 18, "bns_rep": 34, "cages": 22, "lag": 11, "note": "Рывок по БНС: +5 свай. Форшахта: бетонирование участка А-В/3/1-5."}, {"d": "2026-08-25", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 2, "trk_n": 0, "soil_pct": 93.64, "soil_loose": 44315, "soil_solid": 29347.68, "soil_day": 220, "fs_pct": 92.2, "fs_m3": 296.93, "fs_pm": 233.93, "dw_pct": 60.8, "dw_zah": 27, "dw_m3": 4091.4, "bns_list": 18, "bns_rep": 38, "cages": 23, "lag": 1, "note": "Срок по грунту перенесён на 31.08.26 — отставание пересчитано с 11 дней до 1 дня."}, {"d": "2026-08-26", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 2, "trk_n": 0, "soil_pct": 93.75, "soil_loose": 44371, "soil_solid": 29384.76, "soil_day": 56, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 63.24, "dw_zah": 28, "dw_m3": 4251.67, "bns_list": 21, "bns_rep": 41, "cages": 24, "lag": null, "note": "Формирование откоса и вывоз грунта до отм. +137.700 — 100%. Далее только грунт от экскавации СВГ и БНС."}, {"d": "2026-08-27", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 0, "trk_n": 0, "soil_pct": 93.75, "soil_loose": 44371, "soil_solid": 29384.76, "soil_day": 0, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 63.24, "dw_zah": 28, "dw_m3": 4251.67, "bns_list": 23, "bns_rep": 43, "cages": 26, "lag": null, "note": "Самосвалы не работали — вывоз грунта 0 м3."}, {"d": "2026-08-28", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 0, "soil_pct": 94.23, "soil_loose": 44595, "soil_solid": 29533.1, "soil_day": 224, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 65.77, "dw_zah": 29, "dw_m3": 4421.74, "bns_list": 24, "bns_rep": 44, "cages": 26.5, "lag": null, "note": "Открыт новый вид работ — укрепление откоса сеткой и нагелями (1127 м2)."}, {"d": "2026-08-31", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 3, "trk_n": 3, "soil_pct": 96.35, "soil_loose": 45599, "soil_solid": 30198.0, "soil_day": 1004, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 68.18, "dw_zah": 30, "dw_m3": 4579.94, "bns_list": 29, "bns_rep": 49, "cages": 32.5, "lag": null, "note": "Закрытие августа. Откос: смонтировано 392 м2 геотекстиля и дорожной сетки."}, {"d": "2026-09-01", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 0, "trk_n": 0, "soil_pct": null, "soil_loose": null, "soil_solid": null, "soil_day": null, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 68.18, "dw_zah": 30, "dw_m3": 4579.94, "bns_list": 31, "bns_rep": 51, "cages": 33.5, "lag": null, "note": "Раздел «Разработка, вывоз грунта» исключён из отчёта (работы до отм. +137.700 завершены). Планируемое завершение работ 30.09.2026."}, {"d": "2026-09-02", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 2, "trk_n": 0, "soil_pct": null, "soil_loose": null, "soil_solid": null, "soil_day": null, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 70.5, "dw_zah": 31, "dw_m3": 4740.21, "bns_list": 32, "bns_rep": 52, "cages": 34.5, "lag": null, "note": "Захватка №30 СВГ выполнена, экскавация захватки №35."}, {"d": "2026-09-03", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 2, "trk_n": 0, "soil_pct": null, "soil_loose": null, "soil_solid": null, "soil_day": null, "fs_pct": 92.2, "fs_m3": 296.69, "fs_pm": 234.69, "dw_pct": 70.5, "dw_zah": 31, "dw_m3": 4740.21, "bns_list": 35, "bns_rep": 55, "cages": 37, "lag": null, "note": "+3 рабочих БНС за сутки — максимальный суточный темп по сваям."}, {"d": "2026-09-04", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 0, "trk_n": 0, "soil_pct": null, "soil_loose": null, "soil_solid": null, "soil_day": null, "fs_pct": 98.0, "fs_m3": 315.8, "fs_pm": 253.8, "dw_pct": 70.5, "dw_zah": 31, "dw_m3": 4740.21, "bns_list": 37, "bns_rep": 57, "cages": 43, "lag": null, "note": "Форшахта 98%: осталась последняя захватка в/о В/5-6 — 6,2 п.м. Армирование захватки №35 СВГ, экскавация захватки №31. БНС +2 сваи (СР13, СР33), в работе 6 каркасов."}, {"d": "2026-09-07", "itr_d": 8, "itr_n": 2, "wrk_d": 30, "wrk_n": 10, "trk_d": 0, "trk_n": 0, "soil_pct": null, "soil_loose": null, "soil_solid": null, "soil_day": null, "fs_pct": 98.0, "fs_m3": 315.8, "fs_pm": 253.8, "dw_pct": 74.56, "dw_zah": 33, "dw_m3": 5012.83, "bns_list": 43, "bns_rep": 63, "cages": 45, "lag": null, "note": "Форшахта: подготовка последней захватки в/о В/5-6 (6,2 п.м.) к бетонированию. Выполнены захватки №35 и №31 СВГ, идёт экскавация №37. БНС +6 свай (СР59, СР34, СР44, СР37У, СР60, СР32), в работе 2 каркаса."}], "targets": {"soil_solid": 31341.0, "fs_m3": 322.0, "fs_pm": 260.0, "dw_m3": 6722.81, "dw_zah": 44, "gas_pm": 131.0, "gas_done": 17.0, "bns_total": 262, "bns_aug_plan": 73, "bns_sep_plan": 108, "slope_m2": 1127.0, "slope_done": 392.0, "dw_aug_plan": 4262.0, "dw_sep_plan": 5806.06}, "tests": [{"pile": "ОК 1.12", "cluster": "2 куст (коротыши)", "period": "18.07.26 – 21.07.26", "step": "10 ступень", "load": 270, "result": "Подъём сваи 50 мм — испытание завершено"}, {"pile": "ОК 2.12", "cluster": "2 куст (коротыши)", "period": "03.08.26 – 07.08.26", "step": "9 ступень", "load": 270, "result": "Выдёргивание 44 мм — испытание завершено"}, {"pile": "ОК 3.12", "cluster": "2 куст (коротыши)", "period": "22.07.26 – 27.07.26", "step": "10 ступень", "load": 300, "result": "Подъём сваи 50 мм — испытание завершено"}, {"pile": "ОК 4.12", "cluster": "2 куст (коротыши)", "period": "29.07.26 – 01.08.26", "step": "10 ступень", "load": 300, "result": "Подъём сваи 50 мм — испытание завершено"}, {"pile": "ОП 1.12", "cluster": "1 куст (нижний)", "period": "17.07.26 – 18.07.26", "step": "5 ступень", "load": 1000, "result": "Остановлено при погружении сваи >40 мм"}, {"pile": "ОП 2.12", "cluster": "1 куст (нижний)", "period": "22.07.26 – 27.07.26", "step": "19 ступень", "load": 1160, "result": "Остановлено при погружении сваи >40 мм"}, {"pile": "ОП 3.12", "cluster": "3 куст (верхний)", "period": "10.08.26 – 13.08.26", "step": "11 ступень", "load": 840, "result": "Остановлено при погружении сваи 47 мм"}, {"pile": "ОП 4.12", "cluster": "3 куст (верхний)", "period": "31.07.26 – 06.08.26", "step": "19 ступень", "load": 1160, "result": "Остановлено при погружении сваи >43 мм"}], "events": [{"d": "2026-07-28", "text": "Возобновлён вывоз грунта после простоя", "kind": "Грунт"}, {"d": "2026-08-01", "text": "Завершено испытание ОК 4.12 (300 т)", "kind": "Испытания"}, {"d": "2026-08-05", "text": "Срок завершения работ по грунту перенесён с 02.08 на 11.08", "kind": "Сроки"}, {"d": "2026-08-07", "text": "Доставлен 1-й армокаркас БНС, начаты буровые работы", "kind": "БНС"}, {"d": "2026-08-10", "text": "Устроены первые рабочие БНС (СР20, СР21)", "kind": "БНС"}, {"d": "2026-08-12", "text": "Пройдена отметка 50% захваток стены в грунте", "kind": "СВГ"}, {"d": "2026-08-13", "text": "Зафиксирован срыв срока по грунту (2 дня)", "kind": "Сроки"}, {"d": "2026-08-14", "text": "Возобновлено бетонирование форшахты после месячной паузы", "kind": "Форшахта"}, {"d": "2026-08-24", "text": "Получен отчёт по результатам испытаний свай (ОК, АН, ОП)", "kind": "Испытания"}, {"d": "2026-08-25", "text": "Срок по грунту перенесён на 31.08 — отставание пересчитано в 1 день", "kind": "Сроки"}, {"d": "2026-08-26", "text": "Вывоз грунта до отм. +137.700 выполнен на 100%", "kind": "Грунт"}, {"d": "2026-08-28", "text": "Начаты работы по укреплению откоса сеткой и нагелями", "kind": "Откос"}, {"d": "2026-09-01", "text": "Раздел «Разработка грунта» закрыт; план завершения этапа — 30.09.2026", "kind": "Сроки"}]};
+const R = DATA.rows, T = DATA.targets;
+const fmt = (v, d=0) => v === null || v === undefined ? "—" :
+  v.toLocaleString("ru-RU", {minimumFractionDigits:d, maximumFractionDigits:d});
+const dshort = s => { const p = s.split("-"); return p[2] + "." + p[1]; };
+const dfull  = s => { const p = s.split("-"); return p[2] + "." + p[1] + "." + p[0]; };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const last = R[R.length-1];
+const soilLast = R.filter(r => r.soil_pct !== null).slice(-1)[0];
+const bnsFirst = R.findIndex(r => r.bns_list !== null);
+const planZahAt = d => Math.min(44, 15 + 2.5 * ((new Date(d) - new Date("2026-07-28")) / 864e5) / 7);
+const planBnsAt = d => Math.min(262, 9 + 2 * ((new Date(d) - new Date("2026-08-18")) / 864e5));
+document.getElementById("m-date").textContent = dfull(last.d);
+document.getElementById("m-period").textContent = dshort(R[0].d) + " — " + dfull(last.d);
+document.getElementById("m-count").textContent = R.length;
+
+/* ---------------- KPI ---------------- */
+const kpis = [
+  {name:"Разработка и вывоз грунта", val:soilLast.soil_pct, c:"--s1",
+   sub: fmt(soilLast.soil_solid) + " из " + fmt(T.soil_solid) + " м³ тв. тела · +" + fmt(soilLast.soil_solid - R[0].soil_solid) + " м³ за период",
+   tag:["ok","Котлован до отм. +137.700 — 100%"]},
+  {name:"Устройство стены в грунте", val: +(last.dw_zah / T.dw_zah * 100).toFixed(1), c:"--s3",
+   sub: last.dw_zah + " из " + T.dw_zah + " захваток · +" + (last.dw_zah - R[0].dw_zah) + " захваток за период",
+   tag:["ok","План 2,5 захватки в неделю — факт около 3"]},
+  {name:"БНС — рабочие сваи", val: +(last.bns_list / T.bns_total * 100).toFixed(1), c:"--s4",
+   sub: last.bns_list + " из " + T.bns_total + " свай · с завода поступило " + last.cages + " каркасов",
+   tag:["neutral","План на сентябрь — 60 свай"]},
+  {name:"Устройство форшахты", val:last.fs_pct, c:"--s2",
+   sub: fmt(last.fs_pm,2) + " из " + fmt(T.fs_pm,0) + " п.м. · остаток " + fmt(T.fs_pm - last.fs_pm,2) + " п.м.",
+   tag:["warn","Осталась последняя захватка в/о В/5-6"]},
+  {name:"Вырезка газовой трубы", val: +(T.gas_done / T.gas_pm * 100).toFixed(1), c:"--s5",
+   sub: fmt(T.gas_done) + " из " + fmt(T.gas_pm) + " п.м. выполнено",
+   tag:["neutral","Плановая работа по ходу производства"]},
+  {name:"Испытания свай ОК / АН / ОП", val:100, c:"--s6",
+   sub:"20 из 20 свай · максимальная нагрузка 1 160 т",
+   tag:["ok","Отчёт по результатам получен 24.08"]},
+];
+document.getElementById("kpis").innerHTML = kpis.map(k => `
+  <article class="kpi" style="--c:var(${k.c})">
+    <p class="k-name">${k.name}</p>
+    <p class="k-val">${fmt(k.val,1).replace(".",",")}%<span>выполнено</span></p>
+    <div class="bar"><i style="width:${Math.min(k.val,100)}%"></i></div>
+    <p class="k-sub">${k.sub}</p>
+    <p><span class="tag ${k.tag[0]}">${k.tag[1]}</span></p>
+  </article>`).join("");
+
+/* ---------------- Виды работ ---------------- */
+const works = [
+  {n:"Разработка и вывоз грунта", u:"м³ тв. тела", tot:T.soil_solid, f:soilLast.soil_solid, d:soilLast.soil_solid-R[0].soil_solid, c:"--s1", dec:0,
+   s:"Вывоз до отм. +137.700 завершён 26.08. С 01.09 раздел исключён из отчёта; остаток — грунт от экскавации СВГ и БНС."},
+  {n:"Устройство форшахты", u:"п.м.", tot:T.fs_pm, f:last.fs_pm, d:last.fs_pm-R[0].fs_pm, c:"--s2", dec:2,
+   s:"Осталась последняя захватка в/о В/5-6 — 6,2 п.м., идёт подготовка к бетонированию. Пауза в бетонировании с 29.07 по 13.08."},
+  {n:"Вырезка газовой трубы", u:"п.м.", tot:T.gas_pm, f:T.gas_done, d:0, c:"--s5", dec:0,
+   s:"Плановая работа, выполняется по ходу производства работ. Выполнено 17 п.м., остаток 114 п.м."},
+  {n:"Устройство стены в грунте (СВГ)", u:"захваток", tot:T.dw_zah, f:last.dw_zah, d:last.dw_zah-R[0].dw_zah, c:"--s3", dec:0,
+   s:"Плановый темп — 2,5 захватки в неделю от 15 шт на 28.07 до 44 шт; факт около 3 в неделю (33 при плане 29,6 на 07.09). Плановое завершение 20.10.26."},
+  {n:"БНС — рабочие сваи", u:"шт", tot:T.bns_total, f:last.bns_list, d:last.bns_list-R[bnsFirst].bns_list, c:"--s4", dec:0,
+   s:"С 18.08 плановый темп — 2 сваи в сутки: план на 07.09 — 49 свай, факт 43. Плановое завершение 10.12.26."},
+  {n:"Испытания свай (ОК/АН/ОП)", u:"шт", tot:20, f:20, d:0, c:"--s6", dec:0,
+   s:"Завершены; результаты приняты 24.08.26."},
+  {n:"Укрепление откоса сеткой и нагелями", u:"м²", tot:T.slope_m2, f:T.slope_done, d:T.slope_done, c:"--s6", dec:0,
+   s:"Новый вид работ, открыт 28.08.26."},
+];
+document.querySelector("#works tbody").innerHTML = works.map(w => {
+  const p = w.f / w.tot * 100;
+  return `<tr style="--c:var(${w.c})">
+    <td class="txt nm" style="color:var(--ink); font-weight:500"><span class="dot" style="background:var(${w.c})"></span>${w.n}</td>
+    <td data-label="Ед.">${w.u}</td>
+    <td class="num" data-label="Всего">${fmt(w.tot, w.dec)}</td>
+    <td class="num" data-label="Выполнено">${fmt(w.f, w.dec)}</td>
+    <td class="num" data-label="Остаток">${fmt(w.tot - w.f, w.dec)}</td>
+    <td class="minibar" data-label="Выполнение" style="--c:var(${w.c})"><div class="row">
+      <span class="track"><span class="fill" style="width:${Math.min(p,100)}%; display:block"></span></span>
+      <span class="pct">${fmt(p,1).replace(".",",")}%</span>
+    </div></td>
+    <td class="num" data-label="Прирост за период">${w.d ? "+" + fmt(w.d, w.dec) : "0"}</td>
+    <td class="txt st">${w.s}</td>
+  </tr>`;
+}).join("");
+
+/* ---------------- Журнал ---------------- */
+const logBody = document.querySelector("#log tbody");
+let period = "all", query = "";
+function renderLog(){
+  const rows = R.filter(r => {
+    const okP = period === "all" || (period === "aug" ? r.d < "2026-09-01" : r.d >= "2026-09-01");
+    const okQ = !query || r.note.toLowerCase().includes(query);
+    return okP && okQ;
+  });
+  logBody.innerHTML = rows.map(r => `<tr>
+    <td class="num">${dfull(r.d)}</td>
+    <td class="num">${r.soil_pct === null ? "—" : fmt(r.soil_pct,2).replace(".",",")}</td>
+    <td class="num">${r.soil_day === null ? "—" : fmt(r.soil_day)}</td>
+    <td class="num">${r.trk_d} / ${r.trk_n}</td>
+    <td class="num">${fmt(r.fs_pct,1).replace(".",",")}</td>
+    <td class="num">${fmt(r.dw_pct,2).replace(".",",")}</td>
+    <td class="num">${r.dw_zah}</td>
+    <td class="num">${r.dw_m3 === null ? "—" : fmt(r.dw_m3,0)}</td>
+    <td class="num">${r.bns_list === null ? "—" : r.bns_list}</td>
+    <td class="num">${r.cages === null ? "—" : fmt(r.cages,1).replace(".",",")}</td>
+    <td class="num" style="${r.lag >= 5 ? "color:var(--crit); font-weight:600" : ""}">${r.lag === null ? "—" : r.lag}</td>
+    <td class="txt">${r.note}</td>
+  </tr>`).join("") || `<tr><td colspan="12" class="txt">Ничего не найдено — измените запрос.</td></tr>`;
+}
+const periods = [["all","Весь период"],["aug","Июль — август"],["sep","Сентябрь"]];
+document.getElementById("period-tabs").innerHTML = periods.map(([k,l],i) =>
+  `<button role="tab" data-p="${k}" aria-selected="${i===0}">${l}</button>`).join("");
+document.getElementById("period-tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  period = b.dataset.p;
+  [...e.currentTarget.children].forEach(x => x.setAttribute("aria-selected", x === b));
+  renderLog();
+});
+document.getElementById("q").addEventListener("input", e => { query = e.target.value.toLowerCase(); renderLog(); });
+renderLog();
+
+/* ---------------- Риски ---------------- */
+const risks = [
+  ["БНС — устройство рабочих свай","Факт","--s4","На 07.09 выполнено 43 сваи из 262 по проекту, за сентябрь — 14 свай. План на сентябрь — 60 свай. С завода поступило 45 армокаркасов, в работе 2."],
+  ["Форшахта: месячная пауза","Средний","--warn","С 29.07 по 13.08 бетонирование не выполнялось (16 дней без прироста). Срок перенесён с 11.08 на 03.09; на 07.09 выполнение 98%, остаток 6,2 п.м."],
+];
+document.getElementById("risks").innerHTML = risks.map(([n,l,c,t]) => `
+  <article class="risk" style="--lvl:var(${c})">
+    <h3>${n}</h3>
+    <p><span class="tag" style="color:var(${c})">${l}</span></p>
+    <p>${t}</p>
+  </article>`).join("");
+
+/* ---------------- Хронология ---------------- */
+document.getElementById("timeline").innerHTML = DATA.events.map(e => `
+  <div class="tl-row">
+    <span class="tl-date">${dfull(e.d)}</span>
+    <span class="chip">${e.kind}</span>
+    <span class="tl-text">${e.text}</span>
+  </div>`).join("");
+
+/* ---------------- Испытания ---------------- */
+const maxLoad = Math.max(...DATA.tests.map(t => t.load));
+document.querySelector("#tests tbody").innerHTML = DATA.tests.map(t => `
+  <tr>
+    <td style="font-weight:600">${t.pile}</td>
+    <td class="txt" style="min-width:auto">${t.cluster}</td>
+    <td class="num">${t.period}</td>
+    <td class="num">${t.step}</td>
+    <td class="minibar" style="--c:var(--s6)"><div class="row">
+      <span class="track"><span class="fill" style="width:${t.load / maxLoad * 100}%; display:block"></span></span>
+      <span class="pct">${fmt(t.load)}</span>
+    </div></td>
+  </tr>`).join("");
+document.getElementById("tests-note").textContent =
+  "Сваи ОП остановлены при осадке более 40–47 мм; сваи ОК — при подъёме 50 мм. Испытательная нагрузка ОП достигала 1 160 т.";
+
+/* ---------------- Графики (собственный SVG-рендер, без внешних библиотек) ---------------- */
+const labels = R.map(r => dshort(r.d));
+const CH = [
+  {id:"pct", name:"Выполнение, %",
+   sub:"Накопленное выполнение по четырём основным видам работ, % от общего объёма.",
+   note:"Грунт выходит на завершение (96,35% на 31.08), форшахта после простоя 29.07–13.08 добрала объём и вышла на 98%, стена в грунте растёт ровно (+36,5 п.п. за период). БНС стартовали позже всех — 16,4% от 262 свай, это самый длинный оставшийся фронт.",
+   type:"line", unit:"%", ymax:100,
+   sets:[["Разработка грунта","--s1","soil_pct"],["Форшахта","--s2","fs_pct"],["Стена в грунте","--s3","dw_pct"],
+         ["БНС — рабочие сваи","--s4","__bns_pct"]]},
+  {id:"zah", name:"Стена в грунте",
+   sub:"Выполнено захваток нарастающим итогом против плана: 2,5 захватки в неделю от 15 шт на 28.07 до 44 шт по проекту.",
+   note:"Факт идёт с опережением планового темпа: на 07.09 выполнены 33 захватки при плане 29,6. За период добавлено 18 захваток — 0,44 захватки в сутки, то есть около 3 в неделю против плановых 2,5.",
+   type:"line", unit:"шт",
+   sets:[["Выполнено захваток","--s3","dw_zah"],["План — 2,5 захватки в неделю","--s2","__plan_zah",true]]},
+  {id:"bns", name:"БНС и армокаркасы",
+   sub:"Рабочие сваи по поимённому перечню против плана 2 сваи в сутки с 18.08; для контекста — поступление армокаркасов с завода, шт.",
+   note:"С 18.08 плановый темп — 2 сваи в сутки от 9 выполненных: план на 07.09 — 49 свай, факт 43, отставание 6 свай.",
+   type:"line", unit:"шт",
+   sets:[["Рабочие сваи БНС","--s4","bns_list"],["Каркасов поступило с завода","--s1","cages"],
+         ["План — 2 сваи в сутки с 18.08","--s2","__plan_bns",true]]},
+  {id:"soil", name:"Вывоз грунта",
+   sub:"Суточный вывоз грунта по данным отчётов, м³ разрыхлённого.",
+   note:"Разброс от 0 м³ (27.08 — самосвалы не работали) до 2 534 м³ (03.08 — накопленный вывоз за выходные). Средний суточный вывоз за период — около 600 м³.",
+   type:"bar", unit:"м³",
+   sets:[["Вывоз за сутки","--s1","soil_day"]]},
+];
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const el = (n, a={}) => { const e = document.createElementNS(SVGNS, n);
+  for(const k in a) e.setAttribute(k, a[k]); return e; };
+let W = 1000, H = 360, PAD = {l:64, r:18, t:22, b:38}, PW, PH, FS = 11, XDIV = 14, RDOT = 3.6, SW = 2;
+function setGeom(){
+  const w = window.innerWidth || 1000;
+  if(w < 620){      W = 640; H = 470; PAD = {l:52, r:12, t:24, b:40}; FS = 17; XDIV = 5;  RDOT = 5;   SW = 3; }
+  else if(w < 900){ W = 820; H = 400; PAD = {l:58, r:14, t:22, b:38}; FS = 13; XDIV = 8;  RDOT = 4.2; SW = 2.4; }
+  else {            W = 1000; H = 360; PAD = {l:64, r:18, t:22, b:38}; FS = 11; XDIV = 14; RDOT = 3.6; SW = 2; }
+  PW = W - PAD.l - PAD.r; PH = H - PAD.t - PAD.b;
+}
+setGeom();
+
+let current = CH[0];
+const hidden = new Set();
+const box = document.getElementById("chart-box");
+const tip = document.getElementById("tip");
+
+document.getElementById("tabs").innerHTML = CH.map((c,i) =>
+  `<button role="tab" data-id="${c.id}" aria-selected="${i===0}">${c.name}</button>`).join("");
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  current = CH.find(c => c.id === b.dataset.id);
+  hidden.clear();
+  [...e.currentTarget.children].forEach(x => x.setAttribute("aria-selected", x === b));
+  draw();
+});
+
+/* плановый график СВГ: 15 захваток на 28.07 + 2,5 захватки в неделю, потолок — 44 по проекту */
+const PLAN0 = new Date("2026-07-28").getTime(), DAY = 864e5;
+const planZah = d => Math.min(T.dw_zah,
+  15 + 2.5 * ((new Date(d).getTime() - PLAN0) / DAY) / 7);
+/* плановый график БНС: 2 сваи в сутки с 18.08 от 9 выполненных, потолок — 262 по проекту */
+const BNS0 = new Date("2026-08-18").getTime();
+const planBns = d => {
+  const t = new Date(d).getTime();
+  if(t < BNS0) return null;
+  return Math.min(T.bns_total, 9 + 2 * ((t - BNS0) / DAY));
+};
+const values = key => key === "__plan_zah" ? R.map(r => +planZah(r.d).toFixed(2))
+  : key === "__plan_bns" ? R.map(r => planBns(r.d))
+  : key === "__bns_pct" ? R.map(r => r.bns_list === null ? null : +(r.bns_list / T.bns_total * 100).toFixed(2))
+  : R.map(r => r[key]);
+function niceMax(v){
+  if(v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for(const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if(v <= m*p) return m*p;
+  return 10*p;
+}
+function draw(){
+  setGeom();
+  const ink2 = css("--ink-2"), grid = css("--grid"), surf = css("--surface"), lineC = css("--line-strong");
+  document.getElementById("chart-note").textContent = current.note;
+
+  const sets = current.sets.map(([label, token, key, dashed]) => ({
+    label, color: css(token), data: values(key), dashed: !!dashed, key
+  }));
+  const vis = sets.filter(s => !hidden.has(s.label));
+  const stacked = current.type === "stack";
+
+  let peak = 0;
+  if(stacked) R.forEach((_, i) => { peak = Math.max(peak, vis.reduce((a, s) => a + (s.data[i] || 0), 0)); });
+  else vis.forEach(s => s.data.forEach(v => { if(v !== null && v !== undefined) peak = Math.max(peak, v); }));
+  const ymax = current.ymax || niceMax(peak * 1.08);
+  const y = v => PAD.t + PH - (v / ymax) * PH;
+  const n = R.length;
+  const bandW = PW / n;
+  const xLine = i => PAD.l + (n === 1 ? PW/2 : i * PW / (n - 1));
+  const xBand = i => PAD.l + bandW * (i + .5);
+  const X = current.type === "line" ? xLine : xBand;
+
+  const svg = el("svg", {viewBox:`0 0 ${W} ${H}`, width:"100%", height:"100%",
+                         role:"img", "aria-label":current.name + ". " + current.sub});
+
+  /* сетка и ось Y */
+  const steps = 5;
+  for(let i = 0; i <= steps; i++){
+    const v = ymax * i / steps, yy = y(v);
+    svg.appendChild(el("line", {x1:PAD.l, x2:W-PAD.r, y1:yy, y2:yy,
+      stroke: i === 0 ? lineC : grid, "stroke-width": i === 0 ? 1.2 : 1}));
+    const t = el("text", {x:PAD.l-10, y:yy+FS/3, "text-anchor":"end", fill:ink2,
+      "font-family":"IBM Plex Mono, monospace", "font-size":FS});
+    t.textContent = (ymax >= 10 ? Math.round(v) : v).toLocaleString("ru-RU");
+    svg.appendChild(t);
+  }
+  const cap = el("text", {x:PAD.l-10, y:PAD.t-9, "text-anchor":"end", fill:ink2,
+    "font-family":"IBM Plex Mono, monospace", "font-size":FS});
+  cap.textContent = current.unit;
+  svg.appendChild(cap);
+
+  /* ось X */
+  const every = Math.ceil(n / XDIV);
+  R.forEach((r, i) => {
+    if(i % every && i !== n-1) return;
+    const t = el("text", {x:X(i), y:H-PAD.b+FS+6, "text-anchor":"middle", fill:ink2,
+      "font-family":"IBM Plex Mono, monospace", "font-size":FS});
+    t.textContent = labels[i];
+    svg.appendChild(t);
+  });
+
+  /* марки */
+  if(current.type === "line"){
+    vis.forEach(s => {
+      let d = "", pen = false;
+      s.data.forEach((v, i) => {
+        if(v === null || v === undefined){ pen = false; return; }
+        d += (pen ? " L" : " M") + X(i).toFixed(1) + " " + y(v).toFixed(1); pen = true;
+      });
+      svg.appendChild(el("path", {d:d.trim(), fill:"none", stroke:s.color, "stroke-width":SW,
+        "stroke-linejoin":"round", "stroke-linecap":"round",
+        "stroke-dasharray": s.dashed ? "7 5" : "none"}));
+      if(!s.dashed) s.data.forEach((v, i) => {
+        if(v === null || v === undefined) return;
+        svg.appendChild(el("circle", {cx:X(i), cy:y(v), r:RDOT, fill:surf, stroke:s.color, "stroke-width":SW}));
+      });
+    });
+  } else {
+    const bw = Math.max(6, bandW * (stacked ? .62 : .58));
+    R.forEach((_, i) => {
+      let acc = 0;
+      vis.forEach(s => {
+        const v = s.data[i];
+        if(v === null || v === undefined || v === 0) return;
+        const h = (v / ymax) * PH;
+        const yTop = y(acc + v), yBot = y(acc) - (stacked && acc > 0 ? 2 : 0);
+        const hh = Math.max(1.5, yBot - yTop);
+        const rr = Math.min(3, hh/2, bw/2);
+        const x0 = X(i) - bw/2;
+        svg.appendChild(el("path", {
+          d:`M${x0} ${yTop+hh} V${yTop+rr} Q${x0} ${yTop} ${x0+rr} ${yTop} H${x0+bw-rr} Q${x0+bw} ${yTop} ${x0+bw} ${yTop+rr} V${yTop+hh} Z`,
+          fill:s.color}));
+        acc += v;
+      });
+    });
+  }
+
+  /* слой наведения */
+  const cross = el("line", {y1:PAD.t-6, y2:PAD.t+PH, stroke:lineC, "stroke-width":1,
+    "stroke-dasharray":"4 4", opacity:0});
+  svg.appendChild(cross);
+  const hit = el("rect", {x:PAD.l, y:PAD.t-8, width:PW, height:PH+8, fill:"transparent"});
+  svg.appendChild(hit);
+
+  box.querySelector("svg")?.remove();
+  box.insertBefore(svg, tip);
+
+  const idxAt = ev => {
+    const b = svg.getBoundingClientRect();
+    const px = (ev.clientX - b.left) / b.width * W;
+    const i = current.type === "line"
+      ? Math.round((px - PAD.l) / (PW / (n - 1)))
+      : Math.floor((px - PAD.l) / bandW);
+    return Math.max(0, Math.min(n - 1, i));
+  };
+  const show = ev => {
+    const i = idxAt(ev);
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 1);
+    const rows = vis.map(s => {
+      const v = s.data[i];
+      return `<div class="tip-row"><span class="sw" style="background:${s.color}"></span>${s.label}
+        <b>${v === null || v === undefined ? "нет данных" : v.toLocaleString("ru-RU") + " " + current.unit}</b></div>`;
+    }).join("");
+    tip.innerHTML = `<div class="tip-t">Отчёт на ${dfull(R[i].d)}</div>${rows}`;
+    tip.style.opacity = 1;
+    const b = svg.getBoundingClientRect();
+    const px = X(i) / W * b.width;
+    tip.style.left = Math.min(Math.max(px + 14, 8), b.width - tip.offsetWidth - 8) + "px";
+  };
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; cross.setAttribute("opacity", 0); });
+
+  /* легенда с переключением серий */
+  const lg = document.getElementById("chart-legend");
+  lg.innerHTML = sets.length < 2 ? "" : sets.map(s =>
+    `<button class="lg" data-l="${s.label}" aria-pressed="${!hidden.has(s.label)}">
+       <span class="sw" style="background:${s.color}; ${s.dashed ? "opacity:.55" : ""}"></span>${s.label}
+     </button>`).join("");
+}
+document.getElementById("chart-legend").addEventListener("click", e => {
+  const b = e.target.closest("button"); if(!b) return;
+  const l = b.dataset.l;
+  if(hidden.has(l)) hidden.delete(l);
+  else if(current.sets.length - hidden.size > 1) hidden.add(l);
+  draw();
+});
+draw();
+
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+let rt = null;
+window.addEventListener("resize", () => {
+  tip.style.opacity = 0;
+  clearTimeout(rt); rt = setTimeout(draw, 180);
+});
+</script>
+
+</body>
+</html>
