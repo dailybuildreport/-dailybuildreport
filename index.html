@@ -132,6 +132,14 @@ td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
 .tip-row{display:flex; align-items:center; gap:7px; padding:1.5px 0}
 .tip-row b{margin-left:auto; font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace; font-weight:600}
 .log-scroll{max-height:520px; overflow-y:auto}
+/* ---------- журнал: числовые колонки по размеру чисел, комментарий — остальное ---------- */
+#log{table-layout:fixed; min-width:1120px}
+#log th, #log td{padding:7px 8px}
+#log th{font-size:9.5px; letter-spacing:.04em; white-space:normal; line-height:1.25; padding-bottom:6px}
+#log td{font-size:12px}
+#log td span{display:block; font-size:10.5px; line-height:1.3}
+#log td.txt, #log th.txt{min-width:0; white-space:normal; overflow-wrap:anywhere; font-size:12.5px; line-height:1.45}
+#log td.txt{padding-left:12px}
 @media (max-width:700px){.log-scroll{max-height:340px}}
 .chart-note{margin-top:12px; font-size:12px; color:var(--ink-2); border-left:2px solid var(--line-strong); padding-left:10px}
 
@@ -140,6 +148,7 @@ td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
 .two-col{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:26px}
 .risk{border:1px solid var(--line); padding:14px 16px; display:flex; flex-direction:column; gap:7px; background:var(--surface-2)}
 .risk{border-left:4px solid var(--lvl)}
+.risks > .risk:last-child:nth-child(odd){grid-column:1/-1}
 .risk h3{font-size:14px}
 .risk p{font-size:12.5px; color:var(--ink-2)}
 
@@ -220,6 +229,54 @@ footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:col
 }
 @media (max-width:560px){ .kpis{grid-template-columns:1fr} }
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+/* ===== Compact tables: журнал показателей + испытания свай ===== */
+/* Таблицы должны полностью помещаться в собственные блоки без внутренней прокрутки. */
+#journal, #tests,
+.journal, .pile-tests, .tests-table,
+[data-section="journal"], [data-section="pile-tests"]{
+  overflow: visible !important;
+  max-height: none !important;
+}
+#journal .table-wrap, #tests .table-wrap,
+.journal .table-wrap, .pile-tests .table-wrap,
+.tests-table-wrap{
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+#journal table, #tests table,
+.journal table, .pile-tests table, .tests-table{
+  width: 100% !important;
+  table-layout: fixed !important;
+  font-size: 11px !important;
+}
+#journal th, #journal td,
+#tests th, #tests td,
+.journal th, .journal td,
+.pile-tests th, .pile-tests td,
+.tests-table th, .tests-table td{
+  padding: 5px 6px !important;
+  line-height: 1.2 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  vertical-align: top !important;
+}
+#journal th, #tests th,
+.journal th, .pile-tests th, .tests-table th{
+  font-size: 10px !important;
+}
+
+
+.journal, .pile-tests{overflow:visible!important;max-height:none!important;height:auto!important}
+.journal [style*="overflow"], .pile-tests [style*="overflow"]{overflow:visible!important;max-height:none!important}
+.journal table, .pile-tests table{width:100%!important;table-layout:fixed!important;font-size:11px!important}
+.journal th,.journal td,.pile-tests th,.pile-tests td{
+ padding:5px 6px!important;line-height:1.2!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;vertical-align:top!important
+}
+
 </style>
 <style>
 .verdict{background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--s4);
@@ -474,7 +531,7 @@ footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:col
     </div>
   </section>
 
-  <section class="panel">
+  <section class="journal panel">
     <header>
       <div><h2>Журнал показателей по дням</h2></div>
       <div class="controls">
@@ -484,10 +541,20 @@ footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:col
     </header>
     <div class="pad scroll log-scroll">
       <table id="log">
+        <colgroup>
+          <col style="width:98px"><col style="width:90px"><col style="width:60px"><col style="width:72px">
+          <col style="width:60px"><col style="width:56px"><col style="width:56px"><col style="width:56px">
+          <col style="width:62px"><col style="width:50px"><col style="width:56px"><col style="width:60px">
+          <col style="width:56px"><col>
+        </colgroup>
         <thead><tr>
-          <th>Период работ</th><th>Дата отчёта</th><th>Грунт, %</th><th>Вывоз, м³</th><th>Самосвалы д/н</th>
-          <th>Форшахта, %</th><th>Захваток СВГ</th><th>План СВГ</th><th>СВГ, м³</th>
-          <th>БНС, шт</th><th>План БНС</th><th>Каркасов</th><th>Откос, м²</th><th class="txt">Комментарий</th>
+          <th>Период работ</th><th title="Дата подачи сводки">Сводка</th><th>Грунт, %</th><th>Вывоз, м³</th>
+          <th title="Самосвалы: день / ночь">Самосв. д/н</th>
+          <th title="Форшахта, % выполнения">Форш., %</th><th title="Выполнено захваток стены в грунте">СВГ, захв.</th>
+          <th title="План по захваткам СВГ">План СВГ</th><th title="Стена в грунте, м³ бетона">СВГ, м³</th>
+          <th title="Буронабивные сваи, всего">БНС, шт</th><th title="План по сваям, накопительно">План БНС</th>
+          <th title="Армокаркасов всего на площадке">Каркасы</th><th title="Укрепление откоса, м²">Откос, м²</th>
+          <th class="txt">Комментарий</th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -505,7 +572,7 @@ footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:col
       <div class="pad"><div class="timeline" id="timeline"></div></div>
     </section>
 
-    <section class="panel">
+    <section class="pile-tests panel">
       <header><div><h2>Испытания свай</h2></div></header>
       <div class="pad scroll">
         <table id="tests">
@@ -520,15 +587,15 @@ footer.note{font-size:12px; color:var(--ink-2); display:flex; flex-direction:col
 </div>
 
 <script>
-const DATA = {"rows":[{"d":"2026-07-28","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":77.59,"soil_loose":31770.0,"soil_solid":21045.0,"soil_day":0,"fs_pct":57.7,"fs_m3":206.77,"fs_pm":150.23,"dw_pct":34.0,"dw_zah":15,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Вывоз грунта возобновлён с утра 28.07.26. Экскавация захватки №18.","slope":null,"soil_closed":false,"soil_day_rep":0,"plan_bns":0.0,"plan_zah":14.64,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-28","wp_end":"2026-07-27","wp_start":"2026-07-27","wp_days":1},{"d":"2026-07-29","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":78.2,"soil_loose":32026.0,"soil_solid":21209.0,"soil_day":256,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":34.0,"dw_zah":15,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Малый темп вывоза. Армирование захватки №18. Начало испытания ОК 4.12.","slope":null,"soil_closed":false,"soil_day_rep":256,"plan_bns":0.0,"plan_zah":15.0,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-29","wp_end":"2026-07-28","wp_start":"2026-07-28","wp_days":1},{"d":"2026-07-30","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":4,"soil_pct":79.54,"soil_loose":32578.0,"soil_solid":21574.0,"soil_day":552,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":36.36,"dw_zah":16,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Захватка №18 выполнена. Армирование захватки №25.","slope":null,"soil_closed":false,"soil_day_rep":552,"plan_bns":0.0,"plan_zah":15.36,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-30","wp_end":"2026-07-29","wp_start":"2026-07-29","wp_days":1},{"d":"2026-07-31","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":7,"trk_n":5,"soil_pct":80.97,"soil_loose":33162.0,"soil_solid":21961.0,"soil_day":584,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":38.6,"dw_zah":17,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Привлечены дополнительная буровая установка и ямобур на базе КамАЗа.","slope":null,"soil_closed":false,"soil_day_rep":584,"plan_bns":0.0,"plan_zah":15.71,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-31","wp_end":"2026-07-30","wp_start":"2026-07-30","wp_days":1},{"d":"2026-08-03","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":9,"trk_n":6,"soil_pct":87.16,"soil_loose":35696.0,"soil_solid":23639.0,"soil_day":2534,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":40.9,"dw_zah":18,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Прирост вывоза 2 534 м³ к сводке от 31.07 — за 3 суток, 845 м³/сут. Испытание ОК 4.12 завершено 01.08.","slope":null,"soil_closed":false,"soil_day_rep":2534,"plan_bns":0.0,"plan_zah":16.79,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-03","wp_end":"2026-08-02","wp_start":"2026-07-31","wp_days":3},{"d":"2026-08-04","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":8,"trk_n":17,"soil_pct":87.68,"soil_loose":35908.0,"soil_solid":23780.0,"soil_day":212,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":40.9,"dw_zah":18,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Вывоз грунта продолжается, суточный прирост 212 м³ по накопительным объёмам.","slope":null,"soil_closed":false,"soil_day_rep":1010,"plan_bns":0.0,"plan_zah":17.14,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-04","wp_end":"2026-08-03","wp_start":"2026-08-03","wp_days":1},{"d":"2026-08-05","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":11,"soil_pct":89.79,"soil_loose":36776.0,"soil_solid":24354.0,"soil_day":868,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":43.18,"dw_zah":19,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Плановое завершение работ по грунту уточнено на 11.08.26.","slope":null,"soil_closed":false,"soil_day_rep":868,"plan_bns":0.0,"plan_zah":17.5,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-05","wp_end":"2026-08-04","wp_start":"2026-08-04","wp_days":1},{"d":"2026-08-06","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":0,"soil_pct":90.69,"soil_loose":37140.0,"soil_solid":24596.0,"soil_day":364,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":43.18,"dw_zah":19,"dw_m3":2894.0,"bns_list":0,"bns_rep":20,"cages":0.0,"lag":null,"note":"Буровые работы по рабочим БНС не начаты; армокаркасы ожидаются с завода. Испытание ОП 4.12 остановлено при осадке >43 мм.","slope":null,"soil_closed":false,"soil_day_rep":364,"plan_bns":0.0,"plan_zah":17.86,"plan_bns_total":20.0,"cages_total":20.0,"report_date":"2026-08-06","wp_end":"2026-08-05","wp_start":"2026-08-05","wp_days":1},{"d":"2026-08-07","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":91.39,"soil_loose":37428.0,"soil_solid":24786.0,"soil_day":288,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":45.45,"dw_zah":20,"dw_m3":3054.27,"bns_list":0,"bns_rep":20,"cages":1.0,"lag":null,"note":"Доставлен 1-й армокаркас БНС, начато бурение ствола скважины.","slope":null,"soil_closed":false,"soil_day_rep":288,"plan_bns":0.0,"plan_zah":18.21,"plan_bns_total":20.0,"cages_total":21.0,"report_date":"2026-08-07","wp_end":"2026-08-06","wp_start":"2026-08-06","wp_days":1},{"d":"2026-08-10","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":14,"soil_pct":96.22,"soil_loose":39406.0,"soil_solid":26096.0,"soil_day":1978,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":47.7,"dw_zah":21,"dw_m3":3197.74,"bns_list":2,"bns_rep":20,"cages":5.0,"lag":null,"note":"Выполнены первые рабочие БНС: СР20, СР21. Начало испытаний ОП 3.12.","slope":null,"soil_closed":false,"soil_day_rep":1978,"plan_bns":1.143,"plan_zah":19.29,"plan_bns_total":20.0,"cages_total":25.0,"report_date":"2026-08-10","wp_end":"2026-08-09","wp_start":"2026-08-07","wp_days":3},{"d":"2026-08-11","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":96.86,"soil_loose":39670.0,"soil_solid":26271.0,"soil_day":264,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":47.7,"dw_zah":21,"dw_m3":3197.74,"bns_list":3,"bns_rep":20,"cages":5.0,"lag":null,"note":"Вывоз грунта продолжается. Устроены рабочие сваи СР20, СР21, СР10; в работе 5 армокаркасов.","slope":null,"soil_closed":false,"soil_day_rep":264,"plan_bns":2.286,"plan_zah":19.64,"plan_bns_total":21.14,"cages_total":25.0,"report_date":"2026-08-11","wp_end":"2026-08-10","wp_start":"2026-08-10","wp_days":1},{"d":"2026-08-12","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":97.23,"soil_loose":39822.0,"soil_solid":26372.0,"soil_day":152,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":50.0,"dw_zah":22,"dw_m3":3358.0,"bns_list":4,"bns_rep":20,"cages":5.0,"lag":null,"note":"Выполнено 50% захваток СВГ.","slope":null,"soil_closed":false,"soil_day_rep":152,"plan_bns":3.429,"plan_zah":20.0,"plan_bns_total":22.29,"cages_total":25.0,"report_date":"2026-08-12","wp_end":"2026-08-11","wp_start":"2026-08-11","wp_days":1},{"d":"2026-08-13","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":6,"trk_n":0,"soil_pct":97.72,"soil_loose":40020.0,"soil_solid":26503.3,"soil_day":198,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":50.0,"dw_zah":22,"dw_m3":3358.0,"bns_list":4,"bns_rep":20,"cages":7.5,"lag":2,"note":"Работы по грунту в завершающей стадии: выполнено 26 503 м³ тв. тела. На площадке 7,5 армокаркаса БНС.","slope":null,"soil_closed":false,"soil_day_rep":198,"plan_bns":4.571,"plan_zah":20.36,"plan_bns_total":23.43,"cages_total":27.5,"report_date":"2026-08-13","wp_end":"2026-08-12","wp_start":"2026-08-12","wp_days":1},{"d":"2026-08-14","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":98.33,"soil_loose":40272.0,"soil_solid":26670.2,"soil_day":252,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":52.3,"dw_zah":23,"dw_m3":3518.27,"bns_list":5,"bns_rep":21,"cages":7.5,"lag":3,"note":"Форшахта: бетонирование участков Б-Г/5-6, ДЖ-Г/6-7. Новый плановый срок по грунту — 24.08.","slope":null,"soil_closed":false,"soil_day_rep":252,"plan_bns":5.714,"plan_zah":20.71,"plan_bns_total":24.57,"cages_total":27.5,"report_date":"2026-08-14","wp_end":"2026-08-13","wp_start":"2026-08-13","wp_days":1},{"d":"2026-08-17","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":100.0,"soil_loose":41532.0,"soil_solid":27504.6,"soil_day":1260,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":54.7,"dw_zah":24,"dw_m3":3678.54,"bns_list":8,"bns_rep":24,"cages":10.0,"lag":6,"note":"Достигнут геодезический объём вывоза 27 122 м³ — раздел выполнен на 100 %. Ускорение по БНС: +3 сваи за отчётный период.","slope":null,"soil_closed":false,"soil_day_rep":1260,"plan_bns":9.571,"plan_zah":21.79,"plan_bns_total":28.0,"cages_total":30.0,"report_date":"2026-08-17","wp_end":"2026-08-16","wp_start":"2026-08-14","wp_days":3},{"d":"2026-08-18","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":100.0,"soil_loose":41868.0,"soil_solid":27727.1,"soil_day":336,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":54.7,"dw_zah":24,"dw_m3":3678.54,"bns_list":9,"bns_rep":25,"cages":12.0,"lag":7,"note":"Форшахта: устройство траншеи на участке А-В/3/1-5.","slope":null,"soil_closed":false,"soil_day_rep":336,"plan_bns":11.143,"plan_zah":22.14,"plan_bns_total":29.57,"cages_total":32.0,"report_date":"2026-08-18","wp_end":"2026-08-17","wp_start":"2026-08-17","wp_days":1},{"d":"2026-08-20","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":6,"trk_n":0,"soil_pct":100.0,"soil_loose":43315.0,"soil_solid":28685.4,"soil_day":1447,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":57.2,"dw_zah":25,"dw_m3":3847.6,"bns_list":11,"bns_rep":27,"cages":16.0,"lag":9,"note":"Привлечён автокран 70 т. Захватка №44 СВГ выполнена.","slope":null,"soil_closed":false,"soil_day_rep":821,"plan_bns":14.286,"plan_zah":22.86,"plan_bns_total":32.71,"cages_total":36.0,"report_date":"2026-08-20","wp_end":"2026-08-19","wp_start":"2026-08-18","wp_days":2},{"d":"2026-08-21","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":0,"soil_pct":100.0,"soil_loose":43831.0,"soil_solid":29027.1,"soil_day":516,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":59.6,"dw_zah":26,"dw_m3":4007.87,"bns_list":13,"bns_rep":29,"cages":18.0,"lag":10,"note":"Бетонирование захватки №28 СВГ.","slope":null,"soil_closed":false,"soil_day_rep":516,"plan_bns":15.857,"plan_zah":23.21,"plan_bns_total":34.29,"cages_total":38.0,"report_date":"2026-08-21","wp_end":"2026-08-20","wp_start":"2026-08-20","wp_days":1},{"d":"2026-08-24","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44095.0,"soil_solid":29201.9,"soil_day":264,"fs_pct":86.0,"fs_m3":277.0,"fs_pm":214.76,"dw_pct":60.8,"dw_zah":27,"dw_m3":4091.4,"bns_list":17,"bns_rep":37,"cages":22.0,"lag":11,"note":"БНС: за период работ 21–23.08 выполнено +8 свай. Форшахта: бетонирование участка А-В/3/1-5.","slope":null,"soil_closed":false,"soil_day_rep":264,"plan_bns":21.0,"plan_zah":24.29,"plan_bns_total":39.0,"cages_total":42.0,"report_date":"2026-08-24","wp_end":"2026-08-23","wp_start":"2026-08-21","wp_days":3},{"d":"2026-08-25","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44315.0,"soil_solid":29347.68,"soil_day":220,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":233.93,"dw_pct":60.8,"dw_zah":27,"dw_m3":4091.4,"bns_list":18,"bns_rep":38,"cages":23.0,"lag":1,"note":"Плановое завершение работ по грунту уточнено на 31.08.26. Форшахта доведена до 92,2 %.","slope":null,"soil_closed":false,"soil_day_rep":220,"plan_bns":23.0,"plan_zah":24.64,"plan_bns_total":41.0,"cages_total":43.0,"report_date":"2026-08-25","wp_end":"2026-08-24","wp_start":"2026-08-24","wp_days":1},{"d":"2026-08-26","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44371.0,"soil_solid":29384.76,"soil_day":56,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":63.24,"dw_zah":28,"dw_m3":4251.67,"bns_list":21,"bns_rep":41,"cages":24.0,"lag":null,"note":"Формирование откоса и вывоз грунта до отм. +137.700 — 100%. Далее только грунт от экскавации СВГ и БНС.","slope":null,"soil_closed":false,"soil_day_rep":56,"plan_bns":25.0,"plan_zah":25.0,"plan_bns_total":43.0,"cages_total":44.0,"report_date":"2026-08-26","wp_end":"2026-08-25","wp_start":"2026-08-25","wp_days":1},{"d":"2026-08-27","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":44371.0,"soil_solid":29384.76,"soil_day":0,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":63.24,"dw_zah":28,"dw_m3":4251.67,"bns_list":23,"bns_rep":43,"cages":26.0,"lag":null,"note":"Прирост вывоза грунта за сутки — 0 м³. Устроены сваи СР46, СР40У; поступило 26 армокаркасов.","slope":null,"soil_closed":false,"soil_day_rep":0,"plan_bns":27.0,"plan_zah":25.36,"plan_bns_total":45.0,"cages_total":46.0,"report_date":"2026-08-27","wp_end":"2026-08-26","wp_start":"2026-08-26","wp_days":1},{"d":"2026-08-28","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":100.0,"soil_loose":44595.0,"soil_solid":29533.1,"soil_day":224,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":65.77,"dw_zah":29,"dw_m3":4421.74,"bns_list":24,"bns_rep":44,"cages":26.5,"lag":null,"note":"Открыт новый вид работ — укрепление откоса сеткой и нагелями (1127 м2).","slope":0.0,"soil_closed":false,"soil_day_rep":224,"plan_bns":29.0,"plan_zah":25.71,"plan_bns_total":47.0,"cages_total":46.5,"report_date":"2026-08-28","wp_end":"2026-08-27","wp_start":"2026-08-27","wp_days":1},{"d":"2026-08-31","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":3,"soil_pct":100.0,"soil_loose":45599.0,"soil_solid":30198.0,"soil_day":1004,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":68.18,"dw_zah":30,"dw_m3":4579.94,"bns_list":29,"bns_rep":49,"cages":32.5,"lag":null,"note":"Закрытие августа. Откос: смонтировано 392 м2 геотекстиля и дорожной сетки.","slope":392.0,"soil_closed":false,"soil_day_rep":1004,"plan_bns":35.0,"plan_zah":26.79,"plan_bns_total":53.0,"cages_total":52.5,"report_date":"2026-08-31","wp_end":"2026-08-30","wp_start":"2026-08-28","wp_days":3},{"d":"2026-09-01","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":68.18,"dw_zah":30,"dw_m3":4579.94,"bns_list":31,"bns_rep":51,"cages":33.5,"lag":null,"note":"Раздел «Разработка, вывоз грунта» закрыт: работы до отм. +137.700 завершены. Открыты работы по укреплению откоса с завершением 30.09.2026.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":37.0,"plan_zah":27.14,"plan_bns_total":55.0,"cages_total":53.5,"report_date":"2026-09-01","wp_end":"2026-08-31","wp_start":"2026-08-31","wp_days":1},{"d":"2026-09-02","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":32,"bns_rep":52,"cages":34.5,"lag":null,"note":"Захватка №30 СВГ выполнена, экскавация захватки №35.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":39.0,"plan_zah":27.5,"plan_bns_total":57.0,"cages_total":54.5,"report_date":"2026-09-02","wp_end":"2026-09-01","wp_start":"2026-09-01","wp_days":1},{"d":"2026-09-03","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":35,"bns_rep":55,"cages":37.0,"lag":null,"note":"+3 сваи БНС за сутки. Экскавация захватки №35 СВГ.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":41.0,"plan_zah":27.86,"plan_bns_total":59.0,"cages_total":57.0,"report_date":"2026-09-03","wp_end":"2026-09-02","wp_start":"2026-09-02","wp_days":1},{"d":"2026-09-04","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":37,"bns_rep":57,"cages":43.0,"lag":null,"note":"Форшахта 98%: осталась последняя захватка в/о В/5-6 — 6,2 п.м. Армирование захватки №35 СВГ, экскавация захватки №31. БНС +2 сваи (СР13, СР33), в работе 6 каркасов.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":43.0,"plan_zah":28.21,"plan_bns_total":61.0,"cages_total":63.0,"report_date":"2026-09-04","wp_end":"2026-09-03","wp_start":"2026-09-03","wp_days":1},{"d":"2026-09-07","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":74.56,"dw_zah":33,"dw_m3":5012.83,"bns_list":43,"bns_rep":63,"cages":45.0,"lag":null,"note":"Форшахта: подготовка последней захватки в/о В/5-6 (6,2 п.м.) к бетонированию. Выполнены захватки №35 и №31 СВГ, идёт экскавация №37. БНС +6 свай (СР59, СР34, СР44, СР37У, СР60, СР32), в работе 2 каркаса.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":49.0,"plan_zah":29.29,"plan_bns_total":67.0,"cages_total":65.0,"report_date":"2026-09-07","wp_end":"2026-09-06","wp_start":"2026-09-04","wp_days":3},{"d":"2026-09-08","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":74.56,"dw_zah":33,"dw_m3":5012.83,"bns_rep":65,"bns_list":45,"cages":46.0,"lag":null,"slope":392.0,"note":"Подготовка к бетонированию захватки №37 СВГ. +2 сваи БНС за сутки, поступило 46 армокаркасов.","soil_closed":true,"soil_day_rep":null,"plan_bns":51.0,"plan_zah":29.64,"plan_bns_total":69.0,"cages_total":66.0,"report_date":"2026-09-08","wp_end":"2026-09-07","wp_start":"2026-09-07","wp_days":1}],"targets":{"soil_solid":31341.0,"fs_m3":322.0,"fs_pm":260.0,"dw_m3":6722.81,"dw_zah":44,"gas_pm":131.0,"gas_done":17.0,"bns_total":262,"bns_aug_plan":73,"bns_sep_plan":108,"slope_m2":1127.0,"slope_done":392.0,"dw_aug_plan":4262.0,"dw_sep_plan":5806.06,"soil_base":27122.0,"soil_fact_last":30198.0,"soil_close":"2026-08-17","bns_plan_total":242.0,"dw_plan_end":"2026-10-17","bns_plan_end":"2026-12-06","tested":20,"bns_plan_total_full":262.0,"bns_deadline":"2026-12-10"},"tests":[{"pile":"ОК 1.12","cluster":"2 куст (коротыши)","period":"18.07.26 – 21.07.26","step":"10 ступень","load":270,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОК 2.12","cluster":"2 куст (коротыши)","period":"03.08.26 – 07.08.26","step":"9 ступень","load":270,"result":"Выдёргивание 44 мм — испытание завершено"},{"pile":"ОК 3.12","cluster":"2 куст (коротыши)","period":"22.07.26 – 27.07.26","step":"10 ступень","load":300,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОК 4.12","cluster":"2 куст (коротыши)","period":"29.07.26 – 01.08.26","step":"10 ступень","load":300,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОП 1.12","cluster":"1 куст (нижний)","period":"17.07.26 – 18.07.26","step":"5 ступень","load":1000,"result":"Остановлено при погружении сваи >40 мм"},{"pile":"ОП 2.12","cluster":"1 куст (нижний)","period":"22.07.26 – 27.07.26","step":"19 ступень","load":1160,"result":"Остановлено при погружении сваи >40 мм"},{"pile":"ОП 3.12","cluster":"3 куст (верхний)","period":"10.08.26 – 13.08.26","step":"11 ступень","load":840,"result":"Остановлено при погружении сваи 47 мм"},{"pile":"ОП 4.12","cluster":"3 куст (верхний)","period":"31.07.26 – 06.08.26","step":"19 ступень","load":1160,"result":"Остановлено при погружении сваи >43 мм"}],"events":[{"d":"2026-07-28","kind":"Грунт","text":"Возобновлён вывоз грунта"},{"d":"2026-08-01","kind":"Испытания","text":"Завершено испытание ОК 4.12 (300 т)"},{"d":"2026-08-07","kind":"БНС","text":"Доставлен 1-й армокаркас БНС, начаты буровые работы"},{"d":"2026-08-10","kind":"БНС","text":"Начало планового периода устройства свай; устроены первые рабочие сваи СР20, СР21"},{"d":"2026-08-12","kind":"СВГ","text":"Пройдена отметка 22 захватки стены в грунте — половина проектного объёма"},{"d":"2026-08-14","kind":"Форшахта","text":"Возобновлено бетонирование форшахты: участки Б-Г/5-6 и ДЖ-Г/6-7"},{"d":"2026-08-17","kind":"Грунт","text":"Достигнут геодезический объём вывоза 27 122 м³ — раздел выполнен на 100 %"},{"d":"2026-08-20","kind":"Ресурсы","text":"Привлечён автокран грузоподъёмностью 70 т"},{"d":"2026-08-24","kind":"Испытания","text":"Получен отчёт по результатам испытаний свай (ОК, АН, ОП)"},{"d":"2026-08-25","kind":"БНС","text":"Максимальный суточный темп устройства свай за период: +4 сваи за одни сутки"},{"d":"2026-08-26","kind":"Грунт","text":"Формирование откоса и вывоз грунта до отм. +137.700 выполнены на 100 %"},{"d":"2026-08-28","kind":"Откос","text":"Открыты работы по укреплению откоса сеткой и нагелями, контрольный срок 30.09.2026"},{"d":"2026-08-31","kind":"БНС","text":"Разрыв с недельным планом свай достигает 4 шт. и далее не сокращается"},{"d":"2026-08-31","kind":"Откос","text":"Смонтировано 392 м² геотекстиля и дорожной сетки"},{"d":"2026-09-01","kind":"Грунт","text":"Раздел «Разработка, вывоз грунта» закрыт и выведен из суточной отчётности"},{"d":"2026-09-04","kind":"Форшахта","text":"Форшахта доведена до 98 % — в работе последняя захватка в/о В/5-6"},{"d":"2026-09-07","kind":"БНС","text":"Прирост +6 свай за период — 2,0 сваи/сут."},{"d":"2026-09-07","kind":"СВГ","text":"Выполнены захватки №35 и №31 — опережение плана достигает 3 захваток"},{"d":"2026-09-08","kind":"БНС","text":"Факт 65 свай при плане 69 — отставание 4 сваи, или 2 суток"}],"analytics":{"bns":{"plan":69.0,"fact":65,"dev":-4.0,"days":-2.0,"avg":1.36,"r14":1.93,"r7":2.0,"planRate":2.0,"need":2.1,"rem":197,"days_left":94,"eta":"2026-12-18","slip":8,"total_plan":242.0,"project":262,"gap":0,"fact_rep":65,"tested":20,"working":45,"total_plan_full":262.0},"dw":{"plan":29.64,"fact":33,"dev":3.4,"days":9.5,"avg":0.429,"avg_week":3.0,"r14":0.429,"r7":0.429,"planRate":2.5,"need":0.275,"need_week":1.93,"rem":11,"days_left":39,"eta":"2026-10-03","slip":-14,"plan_end":"2026-10-17","m3":5012.83,"m3_total":6722.81},"slope":{"fact":392.0,"total":1127.0,"rem":735.0,"days_left":23,"need":32.0,"burst":131.0,"shifts":5.6,"deadline":"2026-09-30"},"fs":{"fact":315.8,"total":322.0,"rem":6.2,"pct":98.0,"pm":253.8,"pm_total":260.0},"soil":{"base":27122.0,"fact":30198.0,"close":"2026-08-17","over":3076.0,"pct_raw":111.3},"gas":{"fact":17.0,"total":131.0,"rem":114.0},"period":{"zah_from":15,"zah_to":33,"zah_d":18,"m3_from":2894,"m3_to":5012.83,"m3_d":2118.83,"bns_from":20,"bns_to":65,"bns_d":45,"fs_from":206.77,"fs_to":315.8,"fs_d":109.03,"fs_pm_d":103.57,"soil_from":21045.0,"soil_to":30198.0,"soil_d":9153,"slope_d":392.0,"cages":46.0,"days":43,"reports":30,"cages_total":66.0,"from":"2026-07-27","to":"2026-09-07","rep_from":"2026-07-28","rep_to":"2026-09-08"}}};
+const DATA = {"rows":[{"d":"2026-07-28","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":77.59,"soil_loose":31770.0,"soil_solid":21045.0,"soil_day":0,"fs_pct":57.7,"fs_m3":206.77,"fs_pm":150.23,"dw_pct":34.0,"dw_zah":15,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Вывоз грунта возобновлён с утра 28.07.26. Экскавация захватки №18.","slope":null,"soil_closed":false,"soil_day_rep":0,"plan_bns":0.0,"plan_zah":14.64,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-28","wp_end":"2026-07-27","wp_start":"2026-07-27","wp_days":1},{"d":"2026-07-29","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":78.2,"soil_loose":32026.0,"soil_solid":21209.0,"soil_day":256,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":34.0,"dw_zah":15,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Малый темп вывоза. Армирование захватки №18. Начало испытания ОК 4.12.","slope":null,"soil_closed":false,"soil_day_rep":256,"plan_bns":0.0,"plan_zah":15.0,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-29","wp_end":"2026-07-28","wp_start":"2026-07-28","wp_days":1},{"d":"2026-07-30","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":4,"soil_pct":79.54,"soil_loose":32578.0,"soil_solid":21574.0,"soil_day":552,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":36.36,"dw_zah":16,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Захватка №18 выполнена. Армирование захватки №25.","slope":null,"soil_closed":false,"soil_day_rep":552,"plan_bns":0.0,"plan_zah":15.36,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-30","wp_end":"2026-07-29","wp_start":"2026-07-29","wp_days":1},{"d":"2026-07-31","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":7,"trk_n":5,"soil_pct":80.97,"soil_loose":33162.0,"soil_solid":21961.0,"soil_day":584,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":38.6,"dw_zah":17,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Привлечены дополнительная буровая установка и ямобур на базе КамАЗа.","slope":null,"soil_closed":false,"soil_day_rep":584,"plan_bns":0.0,"plan_zah":15.71,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-07-31","wp_end":"2026-07-30","wp_start":"2026-07-30","wp_days":1},{"d":"2026-08-03","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":9,"trk_n":6,"soil_pct":87.16,"soil_loose":35696.0,"soil_solid":23639.0,"soil_day":2534,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":40.9,"dw_zah":18,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Прирост вывоза 2 534 м³ к сводке от 31.07 — за 3 суток, 845 м³/сут. Испытание ОК 4.12 завершено 01.08.","slope":null,"soil_closed":false,"soil_day_rep":2534,"plan_bns":0.0,"plan_zah":16.79,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-03","wp_end":"2026-08-02","wp_start":"2026-07-31","wp_days":3},{"d":"2026-08-04","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":8,"trk_n":17,"soil_pct":87.68,"soil_loose":35908.0,"soil_solid":23780.0,"soil_day":212,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":40.9,"dw_zah":18,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Вывоз грунта продолжается, суточный прирост 212 м³ по накопительным объёмам.","slope":null,"soil_closed":false,"soil_day_rep":1010,"plan_bns":0.0,"plan_zah":17.14,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-04","wp_end":"2026-08-03","wp_start":"2026-08-03","wp_days":1},{"d":"2026-08-05","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":11,"soil_pct":89.79,"soil_loose":36776.0,"soil_solid":24354.0,"soil_day":868,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":43.18,"dw_zah":19,"dw_m3":null,"bns_list":null,"bns_rep":null,"cages":null,"lag":null,"note":"Плановое завершение работ по грунту уточнено на 11.08.26.","slope":null,"soil_closed":false,"soil_day_rep":868,"plan_bns":0.0,"plan_zah":17.5,"plan_bns_total":20.0,"cages_total":null,"report_date":"2026-08-05","wp_end":"2026-08-04","wp_start":"2026-08-04","wp_days":1},{"d":"2026-08-06","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":0,"soil_pct":90.69,"soil_loose":37140.0,"soil_solid":24596.0,"soil_day":364,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":43.18,"dw_zah":19,"dw_m3":2894.0,"bns_list":0,"bns_rep":20,"cages":0.0,"lag":null,"note":"Буровые работы по рабочим БНС не начаты; армокаркасы ожидаются с завода. Испытание ОП 4.12 остановлено при осадке >43 мм.","slope":null,"soil_closed":false,"soil_day_rep":364,"plan_bns":0.0,"plan_zah":17.86,"plan_bns_total":20.0,"cages_total":20.0,"report_date":"2026-08-06","wp_end":"2026-08-05","wp_start":"2026-08-05","wp_days":1},{"d":"2026-08-07","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":91.39,"soil_loose":37428.0,"soil_solid":24786.0,"soil_day":288,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":45.45,"dw_zah":20,"dw_m3":3054.27,"bns_list":0,"bns_rep":20,"cages":1.0,"lag":null,"note":"Доставлен 1-й армокаркас БНС, начато бурение ствола скважины.","slope":null,"soil_closed":false,"soil_day_rep":288,"plan_bns":0.0,"plan_zah":18.21,"plan_bns_total":20.0,"cages_total":21.0,"report_date":"2026-08-07","wp_end":"2026-08-06","wp_start":"2026-08-06","wp_days":1},{"d":"2026-08-10","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":14,"soil_pct":96.22,"soil_loose":39406.0,"soil_solid":26096.0,"soil_day":1978,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":47.7,"dw_zah":21,"dw_m3":3197.74,"bns_list":2,"bns_rep":20,"cages":5.0,"lag":null,"note":"Выполнены первые рабочие БНС: СР20, СР21. Начало испытаний ОП 3.12.","slope":null,"soil_closed":false,"soil_day_rep":1978,"plan_bns":1.143,"plan_zah":19.29,"plan_bns_total":20.0,"cages_total":25.0,"report_date":"2026-08-10","wp_end":"2026-08-09","wp_start":"2026-08-07","wp_days":3},{"d":"2026-08-11","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":96.86,"soil_loose":39670.0,"soil_solid":26271.0,"soil_day":264,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":47.7,"dw_zah":21,"dw_m3":3197.74,"bns_list":3,"bns_rep":20,"cages":5.0,"lag":null,"note":"Вывоз грунта продолжается. Устроены рабочие сваи СР20, СР21, СР10; в работе 5 армокаркасов.","slope":null,"soil_closed":false,"soil_day_rep":264,"plan_bns":2.286,"plan_zah":19.64,"plan_bns_total":21.14,"cages_total":25.0,"report_date":"2026-08-11","wp_end":"2026-08-10","wp_start":"2026-08-10","wp_days":1},{"d":"2026-08-12","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":97.23,"soil_loose":39822.0,"soil_solid":26372.0,"soil_day":152,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":50.0,"dw_zah":22,"dw_m3":3358.0,"bns_list":4,"bns_rep":20,"cages":5.0,"lag":null,"note":"Выполнено 50% захваток СВГ.","slope":null,"soil_closed":false,"soil_day_rep":152,"plan_bns":3.429,"plan_zah":20.0,"plan_bns_total":22.29,"cages_total":25.0,"report_date":"2026-08-12","wp_end":"2026-08-11","wp_start":"2026-08-11","wp_days":1},{"d":"2026-08-13","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":6,"trk_n":0,"soil_pct":97.72,"soil_loose":40020.0,"soil_solid":26503.3,"soil_day":198,"fs_pct":64.7,"fs_m3":224.77,"fs_pm":168.23,"dw_pct":50.0,"dw_zah":22,"dw_m3":3358.0,"bns_list":4,"bns_rep":20,"cages":7.5,"lag":2,"note":"Работы по грунту в завершающей стадии: выполнено 26 503 м³ тв. тела. На площадке 7,5 армокаркаса БНС.","slope":null,"soil_closed":false,"soil_day_rep":198,"plan_bns":4.571,"plan_zah":20.36,"plan_bns_total":23.43,"cages_total":27.5,"report_date":"2026-08-13","wp_end":"2026-08-12","wp_start":"2026-08-12","wp_days":1},{"d":"2026-08-14","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":98.33,"soil_loose":40272.0,"soil_solid":26670.2,"soil_day":252,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":52.3,"dw_zah":23,"dw_m3":3518.27,"bns_list":5,"bns_rep":21,"cages":7.5,"lag":3,"note":"Форшахта: бетонирование участков Б-Г/5-6, ДЖ-Г/6-7. Новый плановый срок по грунту — 24.08.","slope":null,"soil_closed":false,"soil_day_rep":252,"plan_bns":5.714,"plan_zah":20.71,"plan_bns_total":24.57,"cages_total":27.5,"report_date":"2026-08-14","wp_end":"2026-08-13","wp_start":"2026-08-13","wp_days":1},{"d":"2026-08-17","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":4,"trk_n":0,"soil_pct":100.0,"soil_loose":41532.0,"soil_solid":27504.6,"soil_day":1260,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":54.7,"dw_zah":24,"dw_m3":3678.54,"bns_list":8,"bns_rep":24,"cages":10.0,"lag":6,"note":"Достигнут геодезический объём вывоза 27 122 м³ — раздел выполнен на 100 %. Ускорение по БНС: +3 сваи за отчётный период.","slope":null,"soil_closed":false,"soil_day_rep":1260,"plan_bns":9.571,"plan_zah":21.79,"plan_bns_total":28.0,"cages_total":30.0,"report_date":"2026-08-17","wp_end":"2026-08-16","wp_start":"2026-08-14","wp_days":3},{"d":"2026-08-18","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":100.0,"soil_loose":41868.0,"soil_solid":27727.1,"soil_day":336,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":54.7,"dw_zah":24,"dw_m3":3678.54,"bns_list":9,"bns_rep":25,"cages":12.0,"lag":7,"note":"Форшахта: устройство траншеи на участке А-В/3/1-5.","slope":null,"soil_closed":false,"soil_day_rep":336,"plan_bns":11.143,"plan_zah":22.14,"plan_bns_total":29.57,"cages_total":32.0,"report_date":"2026-08-18","wp_end":"2026-08-17","wp_start":"2026-08-17","wp_days":1},{"d":"2026-08-20","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":6,"trk_n":0,"soil_pct":100.0,"soil_loose":43315.0,"soil_solid":28685.4,"soil_day":1447,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":57.2,"dw_zah":25,"dw_m3":3847.6,"bns_list":11,"bns_rep":27,"cages":16.0,"lag":9,"note":"Привлечён автокран 70 т. Захватка №44 СВГ выполнена.","slope":null,"soil_closed":false,"soil_day_rep":821,"plan_bns":14.286,"plan_zah":22.86,"plan_bns_total":32.71,"cages_total":36.0,"report_date":"2026-08-20","wp_end":"2026-08-19","wp_start":"2026-08-18","wp_days":2},{"d":"2026-08-21","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":5,"trk_n":0,"soil_pct":100.0,"soil_loose":43831.0,"soil_solid":29027.1,"soil_day":516,"fs_pct":77.0,"fs_m3":247.99,"fs_pm":185.76,"dw_pct":59.6,"dw_zah":26,"dw_m3":4007.87,"bns_list":13,"bns_rep":29,"cages":18.0,"lag":10,"note":"Бетонирование захватки №28 СВГ.","slope":null,"soil_closed":false,"soil_day_rep":516,"plan_bns":15.857,"plan_zah":23.21,"plan_bns_total":34.29,"cages_total":38.0,"report_date":"2026-08-21","wp_end":"2026-08-20","wp_start":"2026-08-20","wp_days":1},{"d":"2026-08-24","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44095.0,"soil_solid":29201.9,"soil_day":264,"fs_pct":86.0,"fs_m3":277.0,"fs_pm":214.76,"dw_pct":60.8,"dw_zah":27,"dw_m3":4091.4,"bns_list":17,"bns_rep":37,"cages":22.0,"lag":11,"note":"БНС: за период работ 21–23.08 выполнено +8 свай. Форшахта: бетонирование участка А-В/3/1-5.","slope":null,"soil_closed":false,"soil_day_rep":264,"plan_bns":21.0,"plan_zah":24.29,"plan_bns_total":39.0,"cages_total":42.0,"report_date":"2026-08-24","wp_end":"2026-08-23","wp_start":"2026-08-21","wp_days":3},{"d":"2026-08-25","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44315.0,"soil_solid":29347.68,"soil_day":220,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":233.93,"dw_pct":60.8,"dw_zah":27,"dw_m3":4091.4,"bns_list":18,"bns_rep":38,"cages":23.0,"lag":1,"note":"Плановое завершение работ по грунту уточнено на 31.08.26. Форшахта доведена до 92,2 %.","slope":null,"soil_closed":false,"soil_day_rep":220,"plan_bns":23.0,"plan_zah":24.64,"plan_bns_total":41.0,"cages_total":43.0,"report_date":"2026-08-25","wp_end":"2026-08-24","wp_start":"2026-08-24","wp_days":1},{"d":"2026-08-26","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":44371.0,"soil_solid":29384.76,"soil_day":56,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":63.24,"dw_zah":28,"dw_m3":4251.67,"bns_list":21,"bns_rep":41,"cages":24.0,"lag":null,"note":"Формирование откоса и вывоз грунта до отм. +137.700 — 100%. Далее только грунт от экскавации СВГ и БНС.","slope":null,"soil_closed":false,"soil_day_rep":56,"plan_bns":25.0,"plan_zah":25.0,"plan_bns_total":43.0,"cages_total":44.0,"report_date":"2026-08-26","wp_end":"2026-08-25","wp_start":"2026-08-25","wp_days":1},{"d":"2026-08-27","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":44371.0,"soil_solid":29384.76,"soil_day":0,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":63.24,"dw_zah":28,"dw_m3":4251.67,"bns_list":23,"bns_rep":43,"cages":26.0,"lag":null,"note":"Прирост вывоза грунта за сутки — 0 м³. Устроены сваи СР46, СР40У; поступило 26 армокаркасов.","slope":null,"soil_closed":false,"soil_day_rep":0,"plan_bns":27.0,"plan_zah":25.36,"plan_bns_total":45.0,"cages_total":46.0,"report_date":"2026-08-27","wp_end":"2026-08-26","wp_start":"2026-08-26","wp_days":1},{"d":"2026-08-28","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":0,"soil_pct":100.0,"soil_loose":44595.0,"soil_solid":29533.1,"soil_day":224,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":65.77,"dw_zah":29,"dw_m3":4421.74,"bns_list":24,"bns_rep":44,"cages":26.5,"lag":null,"note":"Открыт новый вид работ — укрепление откоса сеткой и нагелями (1127 м2).","slope":0.0,"soil_closed":false,"soil_day_rep":224,"plan_bns":29.0,"plan_zah":25.71,"plan_bns_total":47.0,"cages_total":46.5,"report_date":"2026-08-28","wp_end":"2026-08-27","wp_start":"2026-08-27","wp_days":1},{"d":"2026-08-31","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":3,"trk_n":3,"soil_pct":100.0,"soil_loose":45599.0,"soil_solid":30198.0,"soil_day":1004,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":68.18,"dw_zah":30,"dw_m3":4579.94,"bns_list":29,"bns_rep":49,"cages":32.5,"lag":null,"note":"Закрытие августа. Откос: смонтировано 392 м2 геотекстиля и дорожной сетки.","slope":392.0,"soil_closed":false,"soil_day_rep":1004,"plan_bns":35.0,"plan_zah":26.79,"plan_bns_total":53.0,"cages_total":52.5,"report_date":"2026-08-31","wp_end":"2026-08-30","wp_start":"2026-08-28","wp_days":3},{"d":"2026-09-01","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":68.18,"dw_zah":30,"dw_m3":4579.94,"bns_list":31,"bns_rep":51,"cages":33.5,"lag":null,"note":"Раздел «Разработка, вывоз грунта» закрыт: работы до отм. +137.700 завершены. Открыты работы по укреплению откоса с завершением 30.09.2026.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":37.0,"plan_zah":27.14,"plan_bns_total":55.0,"cages_total":53.5,"report_date":"2026-09-01","wp_end":"2026-08-31","wp_start":"2026-08-31","wp_days":1},{"d":"2026-09-02","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":32,"bns_rep":52,"cages":34.5,"lag":null,"note":"Захватка №30 СВГ выполнена, экскавация захватки №35.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":39.0,"plan_zah":27.5,"plan_bns_total":57.0,"cages_total":54.5,"report_date":"2026-09-02","wp_end":"2026-09-01","wp_start":"2026-09-01","wp_days":1},{"d":"2026-09-03","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":2,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":92.2,"fs_m3":296.72,"fs_pm":234.69,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":35,"bns_rep":55,"cages":37.0,"lag":null,"note":"+3 сваи БНС за сутки. Экскавация захватки №35 СВГ.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":41.0,"plan_zah":27.86,"plan_bns_total":59.0,"cages_total":57.0,"report_date":"2026-09-03","wp_end":"2026-09-02","wp_start":"2026-09-02","wp_days":1},{"d":"2026-09-04","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":70.5,"dw_zah":31,"dw_m3":4740.21,"bns_list":37,"bns_rep":57,"cages":43.0,"lag":null,"note":"Форшахта 98%: осталась последняя захватка в/о В/5-6 — 6,2 п.м. Армирование захватки №35 СВГ, экскавация захватки №31. БНС +2 сваи (СР13, СР33), в работе 6 каркасов.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":43.0,"plan_zah":28.21,"plan_bns_total":61.0,"cages_total":63.0,"report_date":"2026-09-04","wp_end":"2026-09-03","wp_start":"2026-09-03","wp_days":1},{"d":"2026-09-07","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":74.56,"dw_zah":33,"dw_m3":5012.83,"bns_list":43,"bns_rep":63,"cages":45.0,"lag":null,"note":"Форшахта: подготовка последней захватки в/о В/5-6 (6,2 п.м.) к бетонированию. Выполнены захватки №35 и №31 СВГ, идёт экскавация №37. БНС +6 свай (СР59, СР34, СР44, СР37У, СР60, СР32), в работе 2 каркаса.","slope":392.0,"soil_closed":true,"soil_day_rep":null,"plan_bns":49.0,"plan_zah":29.29,"plan_bns_total":67.0,"cages_total":65.0,"report_date":"2026-09-07","wp_end":"2026-09-06","wp_start":"2026-09-04","wp_days":3},{"d":"2026-09-08","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.0,"fs_m3":315.8,"fs_pm":253.8,"dw_pct":74.56,"dw_zah":33,"dw_m3":5012.83,"bns_rep":65,"bns_list":45,"cages":46.0,"lag":null,"slope":392.0,"note":"Подготовка к бетонированию захватки №37 СВГ. +2 сваи БНС за сутки, поступило 46 армокаркасов.","soil_closed":true,"soil_day_rep":null,"plan_bns":51.0,"plan_zah":29.64,"plan_bns_total":69.0,"cages_total":66.0,"report_date":"2026-09-08","wp_end":"2026-09-07","wp_start":"2026-09-07","wp_days":1},{"d":"2026-09-09","itr_d":8,"itr_n":2,"wrk_d":30,"wrk_n":10,"trk_d":0,"trk_n":0,"soil_pct":100.0,"soil_loose":null,"soil_solid":null,"soil_day":null,"fs_pct":98.4,"fs_m3":317.8,"fs_pm":255.8,"dw_pct":76.93,"dw_zah":34,"dw_m3":5171.03,"bns_rep":66,"bns_list":46,"cages":47.0,"lag":null,"slope":450.0,"note":"Форшахта 98,4%: остаток 4,2 п.м. в/о В/5-6. СВГ: подготовка к бетонированию захватки №6; факт 34 захватки. БНС: факт 66 свай; 46 рабочих свай по перечню, в работе 1 каркас, с завода поступило 47 каркасов. Откос: смонтировано 450 м² геотекстиля и дорожной сетки. Проблемный вопрос: излишнее накопление грунта от бурения свай и экскавации СВГ, уменьшение рабочей площади; причина — перераспределение ролей в программе Тринити.","soil_closed":true,"soil_day_rep":null,"plan_bns":53.0,"plan_zah":30.0,"plan_bns_total":71.0,"cages_total":67.0,"report_date":"2026-09-09","wp_end":"2026-09-08","wp_start":"2026-09-08","wp_days":1}],"targets":{"soil_solid":31341.0,"fs_m3":322.0,"fs_pm":260.0,"dw_m3":6722.81,"dw_zah":44,"gas_pm":131.0,"gas_done":17.0,"bns_total":262,"bns_aug_plan":73,"bns_sep_plan":108,"slope_m2":1127.0,"slope_done":450.0,"dw_aug_plan":4262.0,"dw_sep_plan":5806.06,"soil_base":27122.0,"soil_fact_last":30198.0,"soil_close":"2026-08-17","bns_plan_total":242.0,"dw_plan_end":"2026-10-17","bns_plan_end":"2026-12-06","tested":20,"bns_plan_total_full":262.0,"bns_deadline":"2026-12-10"},"tests":[{"pile":"ОК 1.12","cluster":"2 куст (коротыши)","period":"18.07.26 – 21.07.26","step":"10 ступень","load":270,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОК 2.12","cluster":"2 куст (коротыши)","period":"03.08.26 – 07.08.26","step":"9 ступень","load":270,"result":"Выдёргивание 44 мм — испытание завершено"},{"pile":"ОК 3.12","cluster":"2 куст (коротыши)","period":"22.07.26 – 27.07.26","step":"10 ступень","load":300,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОК 4.12","cluster":"2 куст (коротыши)","period":"29.07.26 – 01.08.26","step":"10 ступень","load":300,"result":"Подъём сваи 50 мм — испытание завершено"},{"pile":"ОП 1.12","cluster":"1 куст (нижний)","period":"17.07.26 – 18.07.26","step":"5 ступень","load":1000,"result":"Остановлено при погружении сваи >40 мм"},{"pile":"ОП 2.12","cluster":"1 куст (нижний)","period":"22.07.26 – 27.07.26","step":"19 ступень","load":1160,"result":"Остановлено при погружении сваи >40 мм"},{"pile":"ОП 3.12","cluster":"3 куст (верхний)","period":"10.08.26 – 13.08.26","step":"11 ступень","load":840,"result":"Остановлено при погружении сваи 47 мм"},{"pile":"ОП 4.12","cluster":"3 куст (верхний)","period":"31.07.26 – 06.08.26","step":"19 ступень","load":1160,"result":"Остановлено при погружении сваи >43 мм"}],"events":[{"d":"2026-07-28","kind":"Грунт","text":"Возобновлён вывоз грунта"},{"d":"2026-08-01","kind":"Испытания","text":"Завершено испытание ОК 4.12 (300 т)"},{"d":"2026-08-07","kind":"БНС","text":"Доставлен 1-й армокаркас БНС, начаты буровые работы"},{"d":"2026-08-10","kind":"БНС","text":"Начало планового периода устройства свай; устроены первые рабочие сваи СР20, СР21"},{"d":"2026-08-12","kind":"СВГ","text":"Пройдена отметка 22 захватки стены в грунте — половина проектного объёма"},{"d":"2026-08-14","kind":"Форшахта","text":"Возобновлено бетонирование форшахты: участки Б-Г/5-6 и ДЖ-Г/6-7"},{"d":"2026-08-17","kind":"Грунт","text":"Достигнут геодезический объём вывоза 27 122 м³ — раздел выполнен на 100 %"},{"d":"2026-08-20","kind":"Ресурсы","text":"Привлечён автокран грузоподъёмностью 70 т"},{"d":"2026-08-24","kind":"Испытания","text":"Получен отчёт по результатам испытаний свай (ОК, АН, ОП)"},{"d":"2026-08-25","kind":"БНС","text":"Максимальный суточный темп устройства свай за период: +3 сваи за одни сутки"},{"d":"2026-08-26","kind":"Грунт","text":"Формирование откоса и вывоз грунта до отм. +137.700 выполнены на 100 %"},{"d":"2026-08-28","kind":"Откос","text":"Открыты работы по укреплению откоса сеткой и нагелями, контрольный срок 30.09.2026"},{"d":"2026-08-31","kind":"БНС","text":"Разрыв с недельным планом свай достигает 4 шт. и далее не сокращается"},{"d":"2026-08-31","kind":"Откос","text":"Смонтировано 392 м² геотекстиля и дорожной сетки"},{"d":"2026-09-01","kind":"Грунт","text":"Раздел «Разработка, вывоз грунта» закрыт и выведен из суточной отчётности"},{"d":"2026-09-04","kind":"Форшахта","text":"Форшахта доведена до 98 % — в работе последняя захватка в/о В/5-6"},{"d":"2026-09-07","kind":"БНС","text":"Прирост +6 свай за период — 2,0 сваи/сут."},{"d":"2026-09-07","kind":"СВГ","text":"Выполнены захватки №35 и №31 — опережение плана достигает 3 захваток"},{"d":"2026-09-08","kind":"БНС","text":"Факт 65 свай при плане 69 — отставание 4 сваи, или 2 суток"},{"d":"2026-09-09","kind":"Форшахта","text":"Форшахта доведена до 98,4 % — остаток 4,2 п.м. в/о В/5-6"},{"d":"2026-09-09","kind":"СВГ","text":"Факт 34 захватки из 44; подготовка к бетонированию захватки №6"},{"d":"2026-09-09","kind":"БНС","text":"Факт 66 свай при плане 71 — отставание 5 свай, или 2,5 суток"},{"d":"2026-09-09","kind":"Обеспечение","text":"Свободный запас армокаркасов сократился до 1 шт. (было 6 шт. на 03.09)"},{"d":"2026-09-09","kind":"Площадка","text":"Заявлено накопление грунта от бурения и экскавации СВГ — сокращение рабочей площади"},{"d":"2026-09-09","kind":"Откос","text":"Смонтировано 450 м² геотекстиля и дорожной сетки"}],"analytics":{"bns":{"plan":71.0,"fact":66,"dev":-5.0,"days":-2.5,"avg":1.05,"r14":1.79,"r7":2.0,"planRate":2.0,"need":2.11,"rem":196,"days_left":93,"eta":"2026-12-23","slip":13,"rate":1.857,"rate_week":13.0,"wk_n":3,"wk_from":"2026-08-17","wk_list":[{"from":"2026-08-10","to":"2026-08-16","v":4,"plan":8},{"from":"2026-08-17","to":"2026-08-23","v":13,"plan":11},{"from":"2026-08-24","to":"2026-08-30","v":12,"plan":14},{"from":"2026-08-31","to":"2026-09-06","v":14,"plan":14}],"best_week":14,"best_rate":2.0,"eta_plan":"2026-12-08","slip_plan":-2,"nov_week":21,"nov_rate":3.0,"eta_best":"2026-12-15","slip_best":5,"need_week":14.8,"total_plan":242.0,"project":262,"gap":0,"fact_rep":66,"tested":20,"working":46,"total_plan_full":262.0},"cages":{"total":67.0,"spare":1.0,"rate":1.79,"rate_week":12.5,"rate_week14":11.5,"need":2.11},"dw":{"plan":30.0,"fact":34,"dev":4.0,"days":11.2,"avg":0.432,"avg_week":3.02,"r14":3.0,"r7":3.0,"planRate":2.5,"need":0.256,"need_week":1.79,"rem":10,"days_left":39,"eta":"2026-10-01","slip":-16,"plan_end":"2026-10-17","m3":5012.83,"m3_total":6722.81},"slope":{"fact":450.0,"total":1127.0,"rem":677.0,"days_left":22,"need":30.8,"burst":131.0,"shifts":5.2,"r7":8.3,"avg":37.5,"eta7":"2026-11-29","eta_avg":"2026-09-26","ok":true,"deadline":"2026-09-30"},"fs":{"fact":317.8,"total":322.0,"rem":4.2,"pct":98.4,"pm":255.8,"pm_total":260.0,"pm_rem":4.2},"soil":{"base":27122.0,"fact":30198.0,"close":"2026-08-17","over":3076.0,"pct_raw":111.3},"gas":{"fact":17.0,"total":131.0,"rem":114.0},"period":{"zah_from":15,"zah_to":33,"zah_d":18,"m3_from":2894,"m3_to":5012.83,"m3_d":2118.83,"bns_from":20,"bns_to":65,"bns_d":45,"fs_from":206.77,"fs_to":315.8,"fs_d":109.03,"fs_pm_d":103.57,"soil_from":21045.0,"soil_to":30198.0,"soil_d":9153,"slope_d":392.0,"cages":46.0,"days":43,"reports":30,"cages_total":66.0,"from":"2026-07-27","to":"2026-09-07","rep_from":"2026-07-28","rep_to":"2026-09-08"}}};
 const R = DATA.rows, T = DATA.targets;
 let A = DATA.analytics;          // пересчитывается под выбранный диапазон
 let RS = R;                       // строки сводок внутри выбранного диапазона
 const fmt = (v, d=0) => v === null || v === undefined ? "—" :
   v.toLocaleString("ru-RU", {minimumFractionDigits:d, maximumFractionDigits:d});
 const nb = (v, d=0) => fmt(v, d).replace(".", ",");
-const dshort = s => { const p = s.split("-"); return p[2] + "." + p[1]; };
-const dfull  = s => { const p = s.split("-"); return p[2] + "." + p[1] + "." + p[0]; };
+const dshort = s => { if(!s) return "—"; const p = s.split("-"); return p[2] + "." + p[1]; };
+const dfull  = s => { if(!s) return "—"; const p = s.split("-"); return p[2] + "." + p[1] + "." + p[0]; };
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const last = R[R.length-1];
 const DAY = 864e5, tms = s => new Date(s + "T00:00:00Z").getTime();
@@ -586,6 +653,11 @@ const wpFull  = r => r.wp_days === 1 ? dfull(r.wp_end) : dfull(r.wp_start) + " �
   }
 })();
 const gapLabel = g => g === 1 ? "за сутки" : "за " + g + " сут.";
+/* склонение существительных при числительных: 1 сводка / 2 сводки / 5 сводок */
+const plural = (n, a, b, c) => { const x = Math.abs(Math.round(n)) % 100, y = x % 10;
+  return (x > 10 && x < 20) ? c : y === 1 ? a : (y >= 2 && y <= 4) ? b : c; };
+const nSut = n => nb(n, Number.isInteger(n) ? 0 : 1) + " " + plural(n, "сутки", "суток", "суток");
+const nWeek = (n, one, few, many) => n + " " + plural(n, one, few, many) + " в неделю";
 
 /* ============ плановые функции ============ */
 const WEEKS = [["2026-08-10",8],["2026-08-17",11],["2026-08-24",14],["2026-08-31",14],["2026-09-07",14],
@@ -604,6 +676,28 @@ function planBns(t){
   return cum;
 }
 const planBnsTotal = t => +(T.tested + planBns(t)).toFixed(2);
+const planWeekVol = s => { const w = WEEKS.find(x => tms(x[0]) === s); return w ? w[1] : null; };
+
+/* ============ БАЗА ПРОГНОЗА ПО СВАЯМ ============
+   Скользящее окно 7/14 суток для экстраполяции на 3 месяца непригодно: сдвиг отчётной
+   даты на одни сутки переносит нижнюю границу окна через всплеск выработки и меняет
+   измеренный темп на 8–10 %, а на остатке около 200 свай это ±9 суток прогноза.
+   Поэтому базой служит выработка за ПОЛНЫЕ плановые недели (пн–вс сетки WEEKS):
+   неделя раскачки 10–16.08 (+4 при плане 8) из базы исключается, берутся три последние
+   полные недели. Оптимистичный сценарий — лучшая достигнутая неделя.
+   ================================================================================ */
+function bnsWeeks(endT){
+  const pts = R.filter(r => r.bns_rep != null && tms(r.wp_end) <= endT).map(r => [tms(r.wp_end), r.bns_rep]);
+  if(pts.length < 2) return [];
+  const at = t => { let v = null; for(const p of pts) if(p[0] <= t) v = p[1]; return v; };
+  const out = [];
+  for(let st = BNS_START; st + 6*DAY <= endT; st += 7*DAY){
+    const a = at(st - DAY) ?? T.tested, b = at(st + 6*DAY);
+    if(b == null) continue;
+    out.push({s:st, e:st + 6*DAY, v:b - a, plan:planWeekVol(st)});
+  }
+  return out;
+}
 const DW_START = tms("2026-07-28"), DW_PLAN_END = tms(T.dw_plan_end);
 const planZah = t => +Math.min(44, 15 + 2.5 * ((t - DW_START)/DAY) / 7).toFixed(2);
 
@@ -662,14 +756,48 @@ function computeA(rows){
   const bAvg = (bFact - baseOf("bns_rep")) / spanDays;
   const bRem = T.bns_total - bFact;
   const bLeft = Math.max(1, Math.round((tms(T.bns_deadline) - endT) / DAY));
-  const bRate = (b14 && b14 > 0) ? b14 : (bAvg > 0 ? bAvg : null);
+  /* база прогноза — полные плановые недели; скользящие окна оставлены справочно */
+  const bWk = bnsWeeks(endT);
+  const bSteady = bWk.length >= 4 ? bWk.slice(-3) : bWk.length >= 2 ? bWk.slice(1) : bWk;
+  const bWkSum = bSteady.reduce((x, w) => x + w.v, 0);
+  const bWkRate = bSteady.length ? bWkSum / (bSteady.length * 7) : null;
+  const bBestWk = bWk.length ? Math.max(...bWk.map(w => w.v)) : null;
+  const bRate = (bWkRate && bWkRate > 0) ? bWkRate
+              : (b14 && b14 > 0) ? b14 : (bAvg > 0 ? bAvg : null);
+  const bBest = (bBestWk && bBestWk > 0) ? bBestWk / 7 : (b7 && b7 > 0 ? b7 : bRate);
   const bEta = bRate ? iso(endT + Math.round(bRem / bRate) * DAY) : null;
+  const bEtaBest = bBest ? iso(endT + Math.round(bRem / bBest) * DAY) : null;
+  /* Сценарий «выход на недельный график»: с мобилизацией третьей буровой установки
+     площадка выдаёт плановый недельный объём (14 свай/нед, с 02.11 — 21 свая/нед).
+     Накопленное отставание при этом не растёт и снимается в конце на ноябрьском темпе. */
+  const maxWkRate = Math.max(...WEEKS.map(w => w[1])) / 7;
+  const planDayRate = t => { for(const [ws, v] of WEEKS){ const st = tms(ws);
+      if(t >= st && t <= st + 6*DAY) return v / 7; } return t < BNS_START ? 0 : maxWkRate; };
+  let bt = endT, bc = bFact;
+  while(bc < T.bns_total && bt < endT + 400*DAY){ bt += DAY; bc += planDayRate(bt); }
+  const bEtaPlan = iso(bt);
   Object.assign(a.bns, {fact:bFact, plan:bPlan, dev:+(bFact - bPlan).toFixed(1),
     days:+((bFact - bPlan) / 2).toFixed(1), avg:+bAvg.toFixed(2),
     r14:+(b14 ?? bAvg).toFixed(2), r7:+(b7 ?? b14 ?? bAvg).toFixed(2),
     need:+(bRem / bLeft).toFixed(2), rem:bRem, days_left:bLeft, eta:bEta,
     slip:bEta ? Math.round((tms(bEta) - tms(T.bns_deadline)) / DAY) : null,
+    rate:+(bRate ?? 0).toFixed(3), rate_week:+((bRate ?? 0) * 7).toFixed(1),
+    wk_n:bSteady.length, wk_from:bSteady.length ? iso(bSteady[0].s) : null,
+    wk_list:bWk.map(w => ({from:iso(w.s), to:iso(w.e), v:w.v, plan:w.plan})),
+    best_week:bBestWk, best_rate:+(bBest ?? 0).toFixed(2),
+    eta_plan:bEtaPlan, slip_plan:Math.round((tms(bEtaPlan) - tms(T.bns_deadline)) / DAY),
+    nov_week:Math.max(...WEEKS.map(w => w[1])), nov_rate:+maxWkRate.toFixed(2),
+    eta_best:bEtaBest,
+    slip_best:bEtaBest ? Math.round((tms(bEtaBest) - tms(T.bns_deadline)) / DAY) : null,
+    need_week:+((bRem / bLeft) * 7).toFixed(1),
     working:f1.bns_list});
+
+  /* --- армокаркасы: запас на площадке и темп поставки --- */
+  const cagRate = rateOf("cages_total", 7) ?? rateOf("cages_total", 14);
+  a.cages = {total:f1.cages_total, spare:+(f1.cages_total - bFact).toFixed(1),
+    rate:+((cagRate ?? 0)).toFixed(2), rate_week:+((cagRate ?? 0) * 7).toFixed(1),
+    rate_week14:+((rateOf("cages_total", 14) ?? cagRate ?? 0) * 7).toFixed(1),
+    need:+(bRem / bLeft).toFixed(2)};
 
   /* --- стена в грунте --- */
   const zFact = f1.dw_zah, zPlan = +planZah(endT).toFixed(2);
@@ -682,14 +810,26 @@ function computeA(rows){
     avg_week:+(zAvg * 7).toFixed(2), need:+(zRem / zLeft).toFixed(3),
     need_week:+(zRem / zLeft * 7).toFixed(2), eta:zEta,
     slip:zEta ? Math.round((tms(zEta) - tms(BASE.dw.plan_end)) / DAY) : null,
+    rem:zRem, days_left:zLeft,
+    r7:+((rateOf("dw_zah",7) ?? zAvg) * 7).toFixed(2),
+    r14:+((rateOf("dw_zah",14) ?? zAvg) * 7).toFixed(2),
     m3:f1.dw_m3});
 
   /* --- форшахта, откос, грунт --- */
-  Object.assign(a.fs, {fact:f1.fs_m3, rem:+(a.fs.total - f1.fs_m3).toFixed(2), pct:f1.fs_pct, pm:f1.fs_pm});
+  Object.assign(a.fs, {fact:f1.fs_m3, rem:+(a.fs.total - f1.fs_m3).toFixed(2), pct:f1.fs_pct, pm:f1.fs_pm,
+    pm_rem:+(a.fs.pm_total - f1.fs_pm).toFixed(1)});
   const sl = f1.slope ?? 0, slLeft = Math.max(1, Math.round((tms("2026-09-30") - endT) / DAY));
-  Object.assign(a.slope, {fact:sl, rem:+(a.slope.total - sl).toFixed(0), days_left:slLeft,
-    need:+((a.slope.total - sl) / slLeft).toFixed(1),
-    shifts:+((a.slope.total - sl) / a.slope.burst).toFixed(1)});
+  const slRem = +(a.slope.total - sl).toFixed(0);
+  const slNeed = +(slRem / slLeft).toFixed(1);
+  /* два темпа: с открытия вида работ 28.08 и за последние 7 суток.
+     Первый включает пусковую смену 28–30.08 (392 м² за 3 суток), второй — только текущую неделю. */
+  const sl7 = rateOf("slope", 7), slAll = rateOf("slope", 30);
+  const slEta = r => (r && r > 0) ? iso(endT + Math.round(slRem / r) * DAY) : null;
+  Object.assign(a.slope, {fact:sl, rem:slRem, days_left:slLeft, need:slNeed,
+    r7:+((sl7 ?? 0)).toFixed(1), avg:+((slAll ?? 0)).toFixed(1),
+    eta7:slEta(sl7), eta_avg:slEta(slAll),
+    ok:(slAll ?? 0) >= slNeed,
+    shifts:+(slRem / a.slope.burst).toFixed(1)});
   const soilRows = rows.filter(r => r.soil_solid != null);
   if(soilRows.length) a.soil.fact = soilRows[soilRows.length-1].soil_solid;
 
@@ -717,27 +857,33 @@ function computeA(rows){
 /* ============ управленческий вывод ============ */
 function renderVerdict(){
 document.getElementById("verdict-body").innerHTML = `
-  <p class="eyebrow">Работы за ${dshort(A.period.from)} — ${dfull(A.period.to)} · ${A.period.days} суток ·
-     ${A.period.reports} сводок (${dshort(A.period.rep_from)} — ${dshort(A.period.rep_to)})</p>
+  <p class="eyebrow">Работы за ${dshort(A.period.from)} — ${dfull(A.period.to)} · ${nSut(A.period.days)} ·
+     ${A.period.reports} ${plural(A.period.reports,"сводка","сводки","сводок")} (${dshort(A.period.rep_from)} — ${dshort(A.period.rep_to)})</p>
   <ul class="v-list">
     <li><b>Устройство свай</b> — ${A.period.bns_from} → ${A.period.bns_to} шт. (<span class="up">+${A.period.bns_d}</span>).
-        Средний темп ${nb(A.bns.avg,2)} сваи/сут., за последние 7 суток — ${nb(A.bns.r7,2)}.
+        Выработка за полные плановые недели: ${A.bns.wk_list.map(w => dshort(w.from) + "–" + dshort(w.to) + " +" + w.v + (w.plan ? " (план " + w.plan + ")" : "")).join(", ")}.
+        База прогноза — ${nb(A.bns.rate_week,1)} свай/нед. (${nb(A.bns.rate,2)} сваи/сут.) по трём последним полным неделям.
+        Прогноз завершения: ${dfull(A.bns.eta_plan)} при выходе с 02.11 на плановые ${nWeek(A.bns.nov_week,"сваю","сваи","свай")}
+        после мобилизации третьей буровой установки; ${dfull(A.bns.eta_best)} — ${dfull(A.bns.eta)} текущим составом из двух установок.
         ${A.period.bnsMax ? `Максимальный суточный темп — ${nb(A.period.bnsMax.perDay,2)} сваи/сут.
         (${A.period.bnsMax.wp}: +${nb(A.period.bnsMax.delta,0)} ${gapLabel(A.period.bnsMax.gap)}).` : ""}
-        План на ${dshort(A.period.to)} — ${nb(A.bns.plan,0)} шт.</li>
+        План на ${dshort(A.period.to)} — ${nb(A.bns.plan,0)} шт., отставание ${Math.abs(A.bns.dev)} ${plural(Math.abs(A.bns.dev),"свая","сваи","свай")}.</li>
     <li><b>Стена в грунте</b> — ${A.period.zah_from} → ${A.period.zah_to} захваток (<span class="up">+${A.period.zah_d}</span>),
         ${fmt(A.period.m3_from)} → ${fmt(A.period.m3_to)} м³ (<span class="up">+${fmt(A.period.m3_d)}</span>).
-        Устойчивый темп ${nb(A.dw.avg_week,2)} захватки в неделю против плановых 2,5.</li>
+        Устойчивый темп ${nb(A.dw.avg_week,2)} захватки в неделю против плановых 2,5; остаток ${A.dw.rem} ${plural(A.dw.rem,"захватка","захватки","захваток")}.</li>
     <li><b>Разработка и вывоз грунта</b> — ${fmt(A.period.soil_from)} → ${fmt(A.period.soil_to)} м³ тв. тела
         (<span class="up">+${fmt(A.period.soil_d)}</span>). Геодезический объём ${fmt(A.soil.base)} м³ пройден ${dfull(A.soil.close)}, раздел закрыт.</li>
     <li><b>Устройство форшахты</b> — ${nb(A.period.fs_from,2)} → ${nb(A.period.fs_to,2)} м³ бетона
         (<span class="up">+${nb(A.period.fs_d,2)}</span>), ${nb(A.period.fs_pm_d,2)} п.м. за период.
-        Выполнение ${nb(A.fs.fact / A.fs.total * 100,1)} %, в работе последняя захватка.</li>
+        Выполнение ${nb(A.fs.pct,1)} %, остаток ${nb(A.fs.pm_rem,1)} п.м. — последняя захватка в/о В/5-6.</li>
     <li><b>Укрепление откоса</b> — работы открыты 28.08, смонтировано ${fmt(A.period.slope_d)} м² геотекстиля и дорожной сетки
-        из ${fmt(A.slope.total)} м². Контрольный срок 30.09.2026.</li>
+        из ${fmt(A.slope.total)} м². За последние 7 суток ${nb(A.slope.r7,1)} м²/сут. при требуемых ${nb(A.slope.need,1)} м²/сут.
+        до контрольного срока 30.09.2026.</li>
     <li><b>Испытания свай</b> — завершены полностью: ОК 4/4, АН 12/12, ОП 4/4, отчёт получен 24.08.2026.
         Эти ${T.tested} свай учтены в общем объёме ${T.bns_total} шт.</li>
-    <li><b>Обеспечение</b> — всего на площадке ${nb(A.period.cages_total,0)} армокаркасов: ${T.tested} под испытуемые сваи и ${nb(A.period.cages,0)} поступивших с завода по сводкам. Поставка опережает монтаж.</li>
+    <li><b>Обеспечение</b> — всего на площадке ${nb(A.period.cages_total,0)} армокаркасов: ${T.tested} под испытуемые сваи и ${nb(A.period.cages,0)} поступивших с завода по сводкам.
+        Свободный запас сократился до ${nb(A.cages.spare,0)} шт.; темп поставки ${nb(A.cages.rate_week,1)} каркаса/нед. при текущей выработке ${nb(A.bns.rate_week,1)} свай/нед.
+        и ноябрьской потребности ${A.bns.nov_week} шт./нед.</li>
   </ul>`;
 }
 
@@ -745,20 +891,22 @@ document.getElementById("verdict-body").innerHTML = `
 function renderKpis(){
 const kpis = [
   {name:"БНС — рабочие сваи", val:+(A.bns.fact / T.bns_total * 100).toFixed(1), c:"--s4",
-   sub: A.bns.fact + " из " + T.bns_total + " свай (в т.ч. " + T.tested + " испытуемых) · план на " + dshort(A.period.to) + " — " + nb(A.bns.plan,0),
-   tag:["crit", "Отставание " + Math.abs(A.bns.dev) + " свай · " + nb(Math.abs(A.bns.days),0) + " сут."]},
+   sub: A.bns.fact + " из " + T.bns_total + " свай (в т.ч. " + T.tested + " испытуемых) · план на " + dshort(A.period.to) + " — " + nb(A.bns.plan,0) +
+        " · прогноз " + dfull(A.bns.eta_plan) + " при выходе на " + nWeek(A.bns.nov_week,"сваю","сваи","свай"),
+   tag:["crit", "Отставание " + Math.abs(A.bns.dev) + " " + plural(Math.abs(A.bns.dev),"свая","сваи","свай") + " · " + nSut(Math.abs(A.bns.days))]},
   {name:"Стена в грунте (СВГ)", val:+(A.dw.fact / 44 * 100).toFixed(1), c:"--s3",
    sub: A.dw.fact + " из 44 захваток · план на " + dshort(A.period.to) + " — " + nb(A.dw.plan),
-   tag:["ok", "Опережение " + A.dw.dev + " захватки · " + nb(A.dw.days,1) + " сут."]},
+   tag:["ok", "Опережение " + A.dw.dev + " " + plural(A.dw.dev,"захватка","захватки","захваток") + " · " + nSut(A.dw.days)]},
   {name:"Разработка и вывоз грунта", val:100, c:"--s1",
    sub: fmt(A.soil.base) + " м³ по геодезической съёмке",
    tag:["ok", "Закрыт " + dfull(A.soil.close)]},
-  {name:"Устройство форшахты", val:+(A.fs.fact / A.fs.total * 100).toFixed(1), c:"--s2",
-   sub: nb(A.fs.fact,2) + " из " + fmt(A.fs.total) + " м³ · остаток " + nb(A.fs.rem,1) + " м³",
+  {name:"Устройство форшахты", val:A.fs.pct, c:"--s2",
+   sub: nb(A.fs.pm,1) + " из " + fmt(A.fs.pm_total) + " п.м. · остаток " + nb(A.fs.pm_rem,1) + " п.м. (" + nb(A.fs.rem,1) + " м³)",
    tag:["ok", "Идёт в плане, последняя захватка"]},
   {name:"Укрепление откоса", val:+(A.slope.fact / A.slope.total * 100).toFixed(1), c:"--s7",
    sub: fmt(A.slope.fact) + " из " + fmt(A.slope.total) + " м² · остаток " + fmt(A.slope.rem) + " м²",
-   tag:["warn", "Требуется " + nb(A.slope.need,1) + " м²/сут. до 30.09"]},
+   tag:[A.slope.r7 >= A.slope.need ? "warn" : "crit",
+        "Нужно " + nb(A.slope.need,1) + " м²/сут. до 30.09 · факт за 7 сут. " + nb(A.slope.r7,1)]},
   {name:"Вырезка газовой трубы", val:+(A.gas.fact / A.gas.total * 100).toFixed(1), c:"--s5",
    sub: fmt(A.gas.fact) + " из " + fmt(A.gas.total) + " п.м. · остаток " + fmt(A.gas.rem) + " п.м.",
    tag:["neutral", "Выполняется по ходу основных работ"]},
@@ -779,13 +927,13 @@ const works = [
   {n:"БНС — рабочие сваи", u:"шт", tot:T.bns_total, f:A.bns.fact, d:A.period.bns_d, c:"--s4", dec:0,
    s:"Общий объём " + T.bns_total + " свай = " + T.tested + " испытуемых (ОК, АН, ОП), устроенных до 23.07, плюс " + fmt(A.bns.total_plan) + " свай недельного графика 10.08–06.12.2026 при сроке завершения по утверждённому графику " + dfull(T.bns_deadline) + ". Из выполненных " + A.bns.fact + " шт. поимённо в сводках названы " + A.bns.working + " рабочих свай основного поля."},
   {n:"Стена в грунте (СВГ)", u:"захваток", tot:44, f:A.dw.fact, d:A.dw.fact - 15, c:"--s3", dec:0,
-   s:"Выполнено " + fmt(A.dw.m3) + " из " + fmt(A.dw.m3_total) + " м³. Фактический темп " + nb(A.dw.avg_week,2) + " захватки в неделю против плановых 2,5. Плановое достижение 44 захваток — " + dfull(A.dw.plan_end) + "."},
+   s:"Выполнено " + fmt(A.dw.m3) + " из " + fmt(A.dw.m3_total) + " м³. Фактический темп " + nb(A.dw.avg_week,2) + " захватки в неделю против плановых 2,5; остаток " + A.dw.rem + " " + plural(A.dw.rem,"захватка","захватки","захваток") + ". Плановое достижение 44 захваток — " + dfull(A.dw.plan_end) + ", прогноз при текущем темпе — " + dfull(A.dw.eta) + "."},
   {n:"Разработка и вывоз грунта", u:"м³ по съёмке", tot:A.soil.base, f:A.soil.base, d:A.soil.fact - 21045, c:"--s1", dec:0,
    s:"Геодезический объём " + fmt(A.soil.base) + " м³ пройден " + dfull(A.soil.close) + "; всего вывезено " + fmt(A.soil.fact) + " м³ тв. тела. Раздел закрыт."},
   {n:"Устройство форшахты", u:"м³ бетона", tot:A.fs.total, f:A.fs.fact, d:A.fs.fact - 206.77, c:"--s2", dec:2,
-   s:"Выполнено " + nb(A.fs.pm,2) + " из " + fmt(A.fs.pm_total) + " п.м. Остаток — последняя захватка в/о В/5-6, " + nb(A.fs.rem,1) + " м³ / 6,2 п.м., идёт подготовка к бетонированию."},
+   s:"Выполнено " + nb(A.fs.pm,2) + " из " + fmt(A.fs.pm_total) + " п.м. (" + nb(A.fs.pct,1) + " %). Остаток — последняя захватка в/о В/5-6, " + nb(A.fs.rem,1) + " м³ / " + nb(A.fs.pm_rem,1) + " п.м., идёт подготовка к бетонированию."},
   {n:"Укрепление откоса сеткой и нагелями", u:"м²", tot:A.slope.total, f:A.slope.fact, d:A.slope.fact, c:"--s7", dec:0,
-   s:"Открыт 28.08. Смонтировано " + fmt(A.slope.fact) + " м² геотекстиля и дорожной сетки. До контрольного срока 30.09.2026 — " + A.slope.days_left + " суток, требуемый темп " + nb(A.slope.need,1) + " м²/сут."},
+   s:"Открыт 28.08. Смонтировано " + fmt(A.slope.fact) + " м² геотекстиля и дорожной сетки. До контрольного срока 30.09.2026 — " + nSut(A.slope.days_left) + ", требуемый темп " + nb(A.slope.need,1) + " м²/сут. Средний темп с открытия " + nb(A.slope.avg,1) + " м²/сут., за последние 7 суток — " + nb(A.slope.r7,1) + " м²/сут."},
   {n:"Вырезка газовой трубы", u:"п.м.", tot:A.gas.total, f:A.gas.fact, d:0, c:"--s5", dec:0,
    s:"Попутная работа, выполняется по ходу производства основных работ. Отдельный срок не задан, на конечные сроки не влияет."},
   {n:"Испытания свай (ОК/АН/ОП)", u:"шт", tot:20, f:20, d:0, c:"--s6", dec:0,
@@ -811,22 +959,29 @@ document.querySelector("#works tbody").innerHTML = works.map(w => {
 
 /* ============ План / факт и прогноз ============ */
 function renderSched(){
+/* Оценка срока: «+N сут.» — опережение планового срока, «−N сут.» — отставание от него.
+   Прогноз строится от фактического темпа последних 14 суток (для откоса — от темпа
+   последних 7 суток, поскольку вид работ открыт только 28.08). */
+const slipTag = d => (d > 0 ? "+" : d < 0 ? "−" : "") + nSut(Math.abs(d)) + (d === 0 ? " в срок" : "");
 const sched = [
   {n:"БНС — рабочие сваи", c:"--s4", plan:nb(A.bns.plan), fact:A.bns.fact + " шт.",
    dev:(A.bns.dev>0?"+":"") + A.bns.dev + " шт.", days:(A.bns.days>0?"+":"") + nb(A.bns.days,1),
-   rate:nb(A.bns.r14,2) + " шт./сут.", need:nb(A.bns.need,2) + " шт./сут.",
-   pd:dfull(T.bns_deadline), eta:dfull(A.bns.eta), cls:"crit", ev:"−" + A.bns.slip + " сут."},
+   rate:nb(A.bns.rate_week,1) + " шт./нед.", need:nb(A.bns.need_week,1) + " шт./нед.",
+   pd:dfull(T.bns_deadline), eta:dfull(A.bns.eta_plan), cls:"warn",
+   ev:slipTag(-A.bns.slip_plan) + " · при " + A.bns.nov_week + " св./нед."},
   {n:"Стена в грунте (СВГ)", c:"--s3", plan:nb(A.dw.plan), fact:A.dw.fact + " захв.",
    dev:"+" + A.dw.dev + " захв.", days:"+" + nb(A.dw.days,1),
    rate:nb(A.dw.avg_week,2) + " захв./нед.", need:nb(A.dw.need_week,2) + " захв./нед.",
-   pd:dfull(A.dw.plan_end), eta:dfull(A.dw.eta), cls:"ok", ev:"+" + Math.abs(A.dw.slip) + " сут."},
+   pd:dfull(A.dw.plan_end), eta:dfull(A.dw.eta), cls:"ok", ev:slipTag(-A.dw.slip)},
   {n:"Укрепление откоса", c:"--s7", plan:"—", fact:fmt(A.slope.fact) + " м²",
    dev:"остаток " + fmt(A.slope.rem) + " м²", days:"—",
-   rate:"~" + fmt(A.slope.burst) + " м²/сут.", need:nb(A.slope.need,1) + " м²/сут.",
-   pd:"30.09.2026", eta:"достижимо", cls:"warn", ev:"~" + nb(A.slope.shifts,1) + " смены из " + A.slope.days_left + " сут."},
-  {n:"Устройство форшахты", c:"--s2", plan:"322,00 м³", fact:nb(A.fs.fact,2) + " м³",
+   rate:nb(A.slope.r7,1) + " м²/сут. (7 сут.)", need:nb(A.slope.need,1) + " м²/сут.",
+   pd:"30.09.2026", eta:dfull(A.slope.eta7),
+   cls:A.slope.r7 >= A.slope.need ? "warn" : "crit",
+   ev:slipTag(-Math.round((tms(A.slope.eta7) - tms(A.slope.deadline)) / DAY))},
+  {n:"Устройство форшахты", c:"--s2", plan:nb(A.fs.total,2) + " м³", fact:nb(A.fs.fact,2) + " м³",
    dev:"остаток " + nb(A.fs.rem,1) + " м³", days:"—",
-   rate:"—", need:"1 захватка", pd:"—", eta:"в плане", cls:"ok", ev:"Последний захват"},
+   rate:"—", need:"1 захватка", pd:"—", eta:"в плане", cls:"ok", ev:"Последняя захватка"},
 ];
 document.getElementById("sched-plan-h").textContent = "План на " + dshort(A.period.to);
 document.querySelector("#sched tbody").innerHTML = sched.map(s => `<tr>
@@ -881,25 +1036,45 @@ document.getElementById("q").addEventListener("input", e => { query = e.target.v
 /* ============ Риски ============ */
 function renderRisks(){
 const risks = [
-  ["БНС — единственный вид работ на критическом пути","Критический","--crit",
+  ["БНС — срок держится на мобилизации третьей буровой установки","Высокий","--serious",
    "Факт " + A.bns.fact + " свай против плана " + nb(A.bns.plan) + " на " + dfull(A.period.to) + ": отставание " + Math.abs(A.bns.dev) +
-   " свай, или " + nb(Math.abs(A.bns.days),0) + " суток (общий объём " + T.bns_total + " шт. включает " + T.tested + " испытуемых). Требуемый темп до " + dfull(T.bns_deadline) + " — " + nb(A.bns.need,2) +
-   " сваи/сут., фактический за 14 суток — " + nb(A.bns.r14,2) + ". Разрыв в темпе даёт прогнозное завершение " +
-   dfull(A.bns.eta) + " — на " + A.bns.slip + " суток позже плана. С ноября недельный объём вырастает с 14 до 21 сваи, то есть требуемый темп поднимается до 3 свай/сут."],
-  ["Обеспечение армокаркасами опережает монтаж","Низкий","--good",
+   " " + plural(Math.abs(A.bns.dev),"свая","сваи","свай") + ", или " + nSut(Math.abs(A.bns.days)) + " (общий объём " + T.bns_total + " шт. включает " + T.tested + " испытуемых). " +
+   "Практически весь дефицит набран в неделю раскачки 10–16.08 (+4 при плане 8); три последние полные недели дают " +
+   A.bns.wk_list.slice(-3).map(w => "+" + w.v).join(", ") + " свай при плане 14, то есть разрыв дальше почти не растёт. " +
+   "Три сценария от достигнутого темпа: текущим составом (две установки) на " + nb(A.bns.rate_week,1) + " свай/нед. — завершение " + dfull(A.bns.eta) +
+   " (отставание " + Math.abs(A.bns.slip) + " " + plural(Math.abs(A.bns.slip),"сутки","суток","суток") + "); текущим составом на пределе (" + A.bns.best_week +
+   " свай/нед.) — " + dfull(A.bns.eta_best) + " (отставание " + Math.abs(A.bns.slip_best) + " " + plural(Math.abs(A.bns.slip_best),"сутки","суток","суток") + "); " +
+   "с выходом третьей буровой установки и переходом с 02.11 на плановые " + nWeek(A.bns.nov_week,"сваю","сваи","свай") + " — " + dfull(A.bns.eta_plan) +
+   ", то есть в срок с запасом " + nSut(Math.abs(A.bns.slip_plan)) + ". " +
+   "Срок " + dfull(T.bns_deadline) + " достижим только по третьему сценарию, и он весь опирается на мобилизацию: " + nWeek(A.bns.nov_week,"свая","сваи","свай") +
+   " — в полтора раза выше достигнутого максимума, а запас в " + nSut(Math.abs(A.bns.slip_plan)) + " не покрывает и одной недели простоя. " +
+   "Контрольная точка — фактическая выработка первой полной недели ноября."],
+  ["Армокаркасы: поставка вдвое ниже ноябрьской потребности","Высокий","--crit",
    "Всего на площадке " + nb(A.period.cages_total,0) + " армокаркасов при " + A.bns.fact +
-   " устроенных сваях — в работе 1 каркас. Ограничение темпа на площадке, а не в поставке: ускорение достигается перераспределением бригад и техники."],
-  ["Укрепление откоса — срок 30.09 при неначатом основном объёме","Средний","--warn",
+   " устроенных сваях — свободный запас " + nb(A.cages.spare,0) + " шт. против 6 шт. на 03.09: работа идёт «с колёс». " +
+   "Темп поставки " + nb(A.cages.rate_week,1) + " каркаса/нед. за последние 7 суток (" + nb(A.cages.rate_week14,1) +
+   " за 14) — это ровно текущая выработка " + nb(A.bns.rate_week,1) + " свай/нед., то есть запас не восстанавливается. " +
+   "С 02.11 при трёх буровых установках потребуется " + nWeek(A.bns.nov_week,"каркас","каркаса","каркасов") + " — отгрузки с завода нужно поднять почти вдвое, " +
+   "и заказ на это должен быть размещён сейчас, с учётом цикла изготовления. Выход третьей установки без синхронного роста поставки даст простой техники, а не ускорение."],
+  ["Укрепление откоса — темп последней недели не выводит на срок 30.09",
+   A.slope.r7 >= A.slope.need ? "Средний" : "Высокий", A.slope.r7 >= A.slope.need ? "--warn" : "--crit",
    "Выполнено " + fmt(A.slope.fact) + " из " + fmt(A.slope.total) + " м², остаток " + fmt(A.slope.rem) +
-   " м² за " + A.slope.days_left + " суток. Требуемый средний темп " + nb(A.slope.need,1) +
-   " м²/сут.; в период монтажа 28–31.08 фактически выполнялось около " + fmt(A.slope.burst) +
-   " м²/сут., то есть остаток закрывается примерно за " + nb(A.slope.shifts,1) +
-   " рабочих смен. Срок достижим при своевременном выходе бригады на фронт."],
+   " м² за " + nSut(A.slope.days_left) + " — требуется " + nb(A.slope.need,1) + " м²/сут. " +
+   "Пусковая смена 28–30.08 дала 392 м² за 3 суток (около " + fmt(A.slope.burst) + " м²/сут.), но за 31.08–06.09 прироста не было вовсе, " +
+   "и за последние 7 суток фактический темп — " + nb(A.slope.r7,1) + " м²/сут. При его сохранении остаток закрывается только к " + dfull(A.slope.eta7) +
+   ". Срок 30.09 реален лишь при возврате к режиму монтажа конца августа: остаток — примерно " + nb(A.slope.shifts,1) +
+   " таких смен, то есть выход бригады на фронт нужен в ближайшие дни."],
   ["Стена в грунте — опережение, источник резерва","Низкий","--good",
    "Факт " + A.dw.fact + " захваток против плана " + nb(A.dw.plan) + " — опережение " + A.dw.dev + " захватки, или " +
-   nb(A.dw.days,1) + " суток. Фактический темп " + nb(A.dw.avg_week,2) + " захватки в неделю против плановых 2,5; для выхода на " +
-   dfull(A.dw.plan_end) + " достаточно " + nb(A.dw.need_week,2) + " захватки в неделю. Прогноз завершения — " +
-   dfull(A.dw.eta) + ". Высвобождающиеся краны и бригады — резерв для ускорения свай."],
+   nSut(A.dw.days) + ". Фактический темп " + nb(A.dw.avg_week,2) + " захватки в неделю против плановых 2,5; для выхода на " +
+   dfull(A.dw.plan_end) + " достаточно " + nb(A.dw.need_week,2) + " захватки в неделю. Остаток " + A.dw.rem + " " + plural(A.dw.rem,"захватка","захватки","захваток") +
+   ", прогноз завершения — " + dfull(A.dw.eta) + ". Высвобождающиеся краны и бригады — резерв для ускорения свай."],
+  ["Накопление грунта от бурения сокращает рабочую площадь","Средний","--warn",
+   "В сводке от " + dfull(last.d) + " заявлен проблемный вопрос: грунт от бурения свай и экскавации СВГ накапливается на площадке, рабочая площадь уменьшается; " +
+   "причина — перераспределение ролей в программе Тринити (заявки на вывоз). Раздел «Разработка, вывоз грунта» закрыт 01.09, вывоз выведен из суточной отчётности, " +
+   "и попутный грунт больше ничем не нормируется: за 01.09–" + dshort(A.period.to) + " самосвалы выходили эпизодически. " +
+   "Риск прямо ложится на критический путь — стеснённая площадка ограничивает одновременную работу буровых установок и кранов, то есть тот самый темп свай, который требуется поднять до " +
+   nb(A.bns.need,2) + " сваи/сут."],
 ];
 document.getElementById("risks").innerHTML = risks.map(([n,l,c,t]) => `
   <article class="risk" style="--lvl:var(${c})">
@@ -950,7 +1125,16 @@ function buildCH(){ return [
   {id:"bns", name:"БНС — план / факт", type:"time", unit:"шт",
    x0:tms("2026-08-01"), x1:BNS_END, big:true,
    callout:{planFn:planBnsTotal, factKey:"bns_rep", unit:"свай"},
-   note:"",
+   note:"План — недельный график 10.08–06.12.2026: 8 свай в первую неделю, 11 во вторую, затем 14 в неделю, с 02.11 — 21 в неделю, " +
+        "плюс " + T.tested + " испытуемых свай, устроенных до 23.07, как стартовая база. Итог 242 + " + T.tested + " = " + T.bns_total +
+        " свай при сроке завершения " + dfull(T.bns_deadline) + ". Факт " + A.bns.fact + " свай против плана " + nb(A.bns.plan,0) + " на " + dshort(A.period.to) +
+        " — отставание " + Math.abs(A.bns.dev) + " " + plural(Math.abs(A.bns.dev),"свая","сваи","свай") + ". Выработка по полным плановым неделям: " +
+        A.bns.wk_list.map(w => dshort(w.from) + "–" + dshort(w.to) + " +" + w.v + (w.plan ? " при плане " + w.plan : "")).join("; ") +
+        ". Прогноз по трём последним полным неделям (" + nb(A.bns.rate_week,1) + " свай/нед.) — " + dfull(A.bns.eta) +
+        ", по лучшей неделе (" + A.bns.best_week + " свай/нед.) — " + dfull(A.bns.eta_best) +
+        ", при выходе с 02.11 на плановые " + nWeek(A.bns.nov_week,"сваю","сваи","свай") + " (мобилизация третьей буровой установки) — " + dfull(A.bns.eta_plan) +
+        "; требуемый темп до срока — " + nb(A.bns.need,2) + " сваи/сут. Третья линия — армокаркасы на площадке: зазор между ней и фактом и есть свободный запас, сейчас " +
+        nb(A.cages.spare,0) + " шт.",
    sets:[{label:"План, накопительно", token:"--s2", fn:planBnsTotal, dashed:true},
          {label:"Факт, всего устроено", token:"--s4", key:"bns_rep"},
          {label:"Каркасов, всего на площадке", token:"--s1", key:"cages_total"}]},
@@ -960,7 +1144,8 @@ function buildCH(){ return [
    note:"План — равномерный рост 2,5 захватки в неделю от 15 захваток на 28.07 до 44 захваток к " + dfull(A.dw.plan_end) +
         "; после достижения 44 план не растёт. Факт " + A.dw.fact + " захваток против плана " + nb(A.dw.plan) + " — опережение " +
         A.dw.dev + " захватки, или " + nb(A.dw.days,1) + " суток. Фактический темп " + nb(A.dw.avg_week,2) +
-        " захватки в неделю удерживается ровно, без провалов; остаток 11 захваток при таком темпе закрывается к " + dfull(A.dw.eta) + ".",
+        " захватки в неделю удерживается ровно, без провалов; остаток " + A.dw.rem + " " + plural(A.dw.rem,"захватка","захватки","захваток") +
+        " при таком темпе закрывается к " + dfull(A.dw.eta) + " — на " + Math.abs(A.dw.slip) + " " + plural(Math.abs(A.dw.slip),"сутки","суток","суток") + " раньше планового срока.",
    sets:[{label:"План, 2,5 захватки в неделю", token:"--s2", fn:planZah, dashed:true},
          {label:"Факт, захваток", token:"--s3", key:"dw_zah"}]},
   {id:"soil", name:"Вывоз грунта", type:"bar", unit:"м³",
