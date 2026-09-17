@@ -259,7 +259,10 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .range-bar .rng{flex:1}
   .range-bar input[type="date"]{width:100%}
   .chart-legend{gap:6px 12px; font-size:11.5px}
-  .tip{min-width:150px; max-width:70vw; font-size:11.5px; padding:8px 9px}
+  /* на телефоне блок показателей дня не накрывает график, а встаёт под ним */
+  .tip{position:static; left:auto !important; top:auto; width:100%; min-width:0; max-width:none;
+       margin-top:10px; font-size:12px; padding:12px 14px; transform:none}
+  .tip:not(.on){display:none}
   .chart-note{font-size:12px; padding:12px 14px}
   /* «Выполнение по видам работ» — карточками, без горизонтальной прокрутки */
   #works{font-size:13px}
@@ -378,8 +381,11 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 .pan button:hover:not(:disabled){background:var(--accent-soft); color:var(--accent)}
 .pan button:disabled{opacity:.35; cursor:default}
 .pan button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-.chart-box{touch-action:pan-y}      /* вертикальная прокрутка страницы остаётся у браузера */
-.chart-box.pinching{touch-action:none}  /* во время pinch жест обрабатываем сами */
+/* Контейнер графика — фиксированное окно просмотра: ширина не растёт при масштабе,
+   увеличивается только временная шкала внутри. touch-action:pan-y оставляет
+   вертикальную прокрутку страницы браузеру, а горизонтальный жест отдаёт графику;
+   pinch страницы при этом отключён. */
+.chart-box{touch-action:pan-y; overflow:hidden}
 .chart-box.panning{cursor:grabbing; user-select:none}
 .zoomctl button{font-size:17px; font-weight:600; line-height:1; padding-bottom:2px}
 .zoomctl #zoom-reset{font-size:15px; padding-bottom:0}
@@ -1547,10 +1553,13 @@ setGeom();
 
 /* сдвиг видимого окна с упором в границы горизонта */
 let panning = false;
+const sameWin = (p, q) => p && q && Math.abs(p.x0 - q.x0) < 1 && Math.abs(p.x1 - q.x1) < 1;
 function panWindow(a, b){
   const f = {x0:current.x0, x1:current.x1}, span = b - a;
   if(a < f.x0){ a = f.x0; b = a + span; }
   if(b > f.x1){ b = f.x1; a = b - span; }
+  /* упор в край диапазона: движение просто останавливается, лишней перерисовки нет */
+  if(sameWin(zoomWin(current), {x0:a, x1:b})) return;
   zoom[current.id] = {x0:a, x1:b};
   draw();
 }
@@ -1564,7 +1573,8 @@ function panBy(frac){
    не затрагиваются — draw() перерисовывает тот же график в новых границах.
    Минимальное окно — 5 суток, максимальное — полный горизонт графика. */
 const MIN_SPAN = 5 * DAY;
-let pinching = false;
+let pinching = false;   // активен pinch двумя пальцами
+let liveZoom = false;   // масштаб меняется прямо сейчас (кнопка, колесо, pinch)
 function zoomWindow(base, factor, anchorT){
   if(current.type !== "time") return;
   const f = {x0:current.x0, x1:current.x1}, full = f.x1 - f.x0;
@@ -1576,10 +1586,29 @@ function zoomWindow(base, factor, anchorT){
   let x0 = a - span * k, x1 = x0 + span;
   if(x0 < f.x0){ x0 = f.x0; x1 = x0 + span; }
   if(x1 > f.x1){ x1 = f.x1; x0 = x1 - span; }
+  if(sameWin(zoomWin(current), {x0, x1})) return;
   zoom[current.id] = {x0, x1};
-  draw();
+  liveZoom = true; draw(); liveZoom = false;
 }
 const zoomBy = (factor, anchorT) => zoomWindow(zoomWin(current), factor, anchorT);
+/* Масштаб, при котором заданная дата остаётся ровно под заданной точкой экрана.
+   Используется pinch: дата между пальцами не уезжает при изменении масштаба. */
+function zoomToScreen(baseWin, factor, anchorT, clientX){
+  if(current.type !== "time" || anchorT == null) return;
+  const svg = box.querySelector("svg"); if(!svg) return;
+  const f = {x0:current.x0, x1:current.x1}, full = f.x1 - f.x0;
+  const baseSpan = Math.max(1, baseWin.x1 - baseWin.x0);
+  const span = Math.max(MIN_SPAN, Math.min(full, baseSpan * factor));
+  const b = svg.getBoundingClientRect();
+  const px = (clientX - b.left) / b.width * W;
+  const k = Math.min(1, Math.max(0, (px - PAD.l) / PW));
+  let x0 = anchorT - span * k, x1 = x0 + span;
+  if(x0 < f.x0){ x0 = f.x0; x1 = x0 + span; }
+  if(x1 > f.x1){ x1 = f.x1; x0 = x1 - span; }
+  if(sameWin(zoomWin(current), {x0, x1})) return;
+  zoom[current.id] = {x0, x1};
+  liveZoom = true; draw(); liveZoom = false;
+}
 function resetZoom(){
   if(current.type !== "time") return;
   zoom[current.id] = {x0:current.x0, x1:current.x1};
@@ -1597,7 +1626,6 @@ const hidden = new Set();
 let sel = null;
 const box = document.getElementById("chart-box");
 const tip = document.getElementById("tip");
-let panMoved = false;                  // клик после перетаскивания не считается выбором дня
 let chartClick = null;                 // обработчик выбора дня текущей отрисовки
 function clearSelection(){
   sel = null;
@@ -1878,12 +1906,16 @@ function draw(){
     style:"cursor:pointer"});
   svg.appendChild(hit);
 
-  box.querySelector("svg")?.remove();
-  box.insertBefore(svg, tip);
+  /* Замена атомарная: раньше старый SVG сначала удалялся, и между удалением
+     и вставкой оставался кадр без графика — на жестах это читалось как мигание. */
+  const prevSvg = box.querySelector("svg");
+  if(prevSvg) box.replaceChild(svg, prevSvg); else box.insertBefore(svg, tip);
   /* Первое открытие графика — прорисовка слева направо, точки проявляются следом.
      Далее смена вида работ / периода / масштаба — короткое мягкое проявление,
      без резкой замены. Во время перетаскивания и печати анимации нет. */
-  if(ANIM && !printMode && !panning && !zoomDragging){
+  /* Проявление нового SVG недопустимо во время жеста: каждый кадр начинал анимацию
+     с opacity 0 заново, и график «пропадал». Во время pan/pinch/зума анимации нет. */
+  if(ANIM && !printMode && !panning && !zoomDragging && !pinching && !liveZoom){
     const fresh = !DRAWN.has(current.id);
     DRAWN.add(current.id);
     try{
@@ -2080,19 +2112,30 @@ function renderZoomBar(){
   });
 }
 
-/* ---------- жесты на графике ----------
-   Перетаскивание — одним указателем; масштаб — кнопками, Ctrl/Cmd + колесом
-   (тачпадный pinch браузер присылает тем же событием с ctrlKey) и двумя
-   пальцами на экране. Масштабируется только временная ось графика:
-   preventDefault не даёт браузеру увеличить саму страницу. */
+/* ============ ЖЕСТЫ НА ГРАФИКЕ ============
+   Явная машина состояний: idle -> pan (один указатель) -> pinch (два и больше).
+   Опора жеста (base) пересобирается ПРИ ЛЮБОМ изменении числа указателей —
+   именно её отсутствие давало скачок при переходе pinch -> pan.
+   Все изменения окна проходят через requestAnimationFrame: не больше одной
+   перерисовки на кадр, координаты предыдущей фазы жеста не переиспользуются.
+   Обработка ограничена контейнером графика, глобального preventDefault нет. */
 (function initGestures(){
   const host = document.getElementById("chart-box");
-  const pts = new Map();
-  let st = null, pinch = null, raf = 0, pending = null;
-  const run = () => { raf = 0; const fn = pending; pending = null; if(fn) fn(); };
-  const schedule = fn => { pending = fn; if(!raf) raf = requestAnimationFrame(run); };
+  const pts = new Map();          // активные указатели: id -> {x, y}
+  let mode = "idle";              // idle | pan | pinch
+  let base = null;                // опора текущей фазы жеста
+  let moved = 0;                  // максимальное смещение — отличает tap от drag
+  let raf = 0, pending = null;
+  const TAP = 8;                  // порог в px, ниже которого касание считается выбором дня
 
-  /* дата под указателем — чтобы масштаб шёл «от курсора», а не от центра */
+  const flush = () => { raf = 0; const fn = pending; pending = null; if(fn) fn(); };
+  const schedule = fn => { pending = fn; if(!raf) raf = requestAnimationFrame(flush); };
+
+  const list = () => [...pts.values()];
+  const midX = p => p.length > 1 ? (p[0].x + p[1].x) / 2 : p[0].x;
+  const spread = p => Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1;
+
+  /* дата под точкой экрана — по текущему окну просмотра */
   const timeAt = clientX => {
     const svg = host.querySelector("svg"); if(!svg) return null;
     const b = svg.getBoundingClientRect();
@@ -2101,70 +2144,94 @@ function renderZoomBar(){
     const k = Math.min(1, Math.max(0, (px - PAD.l) / PW));
     return z.x0 + k * (z.x1 - z.x0);
   };
+  const canPan = () => {
+    const z = zoomWin(current);
+    return !(z.x0 <= current.x0 && z.x1 >= current.x1);   // на полном горизонте двигать нечего
+  };
 
-  host.addEventListener("pointerdown", ev => {
-    pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
-    if(current.type !== "time") return;
-    if(pts.size === 2){
-      /* начался pinch — перетаскивание отменяем */
-      st = null; panning = false; host.classList.remove("panning");
-      const [a, b] = [...pts.values()];
-      pinch = {d:Math.hypot(a.x - b.x, a.y - b.y) || 1, z:zoomWin(current),
-               t:timeAt((a.x + b.x) / 2)};
-      pinching = true;
-      host.classList.add("pinching");
+  /* пересборка опоры: вызывается на каждое появление и снятие указателя */
+  function rebase(){
+    const p = list();
+    if(!p.length || current.type !== "time"){
+      mode = "idle"; base = null; panning = false; pinching = false;
+      host.classList.remove("panning");
       return;
     }
-    if(pts.size > 1) return;
-    panMoved = false;
-    const z = zoomWin(current);
-    if(z.x0 <= current.x0 && z.x1 >= current.x1) return;   // весь горизонт — двигать некуда
-    st = {x:ev.clientX, z, w:host.getBoundingClientRect().width};
-    panning = true;
-    host.classList.add("panning");
+    const win = zoomWin(current), w = host.getBoundingClientRect().width;
+    if(p.length === 1){
+      mode = "pan";
+      base = {x:p[0].x, win, w};
+      panning = canPan(); pinching = false;
+      host.classList.toggle("panning", panning);
+    } else {
+      mode = "pinch";
+      base = {d:spread(p), win, t:timeAt(midX(p)), w};
+      panning = false; pinching = true;
+      host.classList.remove("panning");
+    }
+  }
+
+  host.addEventListener("pointerdown", ev => {
+    if(ev.pointerType === "mouse" && ev.button !== 0) return;
+    if(pts.size === 0) moved = 0;
+    pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
     try { host.setPointerCapture(ev.pointerId); } catch(e){}
+    rebase();
   });
 
   host.addEventListener("pointermove", ev => {
-    if(pts.has(ev.pointerId)) pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
-    if(pinch && pts.size >= 2){
+    if(!pts.has(ev.pointerId)) return;            // наведение мышью сюда не попадает
+    const prev = pts.get(ev.pointerId);
+    pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if(!base) return;
+    const p = list();
+
+    if(mode === "pinch" && p.length > 1){
       ev.preventDefault();
-      const [a, b] = [...pts.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      schedule(() => zoomWindow(pinch.z, pinch.d / d, pinch.t));
+      const factor = base.d / spread(p);
+      const mid = midX(p);
+      moved = TAP + 1;                            // pinch никогда не выбирает день
+      schedule(() => zoomToScreen(base.win, factor, base.t, mid));
       return;
     }
-    if(!st) return;
-    ev.preventDefault();
-    if(Math.abs(ev.clientX - st.x) > 4) panMoved = true;
-    const span = st.z.x1 - st.z.x0;
-    const dt = -(ev.clientX - st.x) / st.w * (W / PW) * span;
-    panWindow(st.z.x0 + dt, st.z.x1 + dt);
+    if(mode === "pan"){
+      const dx = p[0].x - base.x;
+      const dy = Math.abs(ev.clientY - (prev ? prev.y : ev.clientY));
+      moved = Math.max(moved, Math.abs(dx));
+      if(Math.abs(dx) <= 2 && dy === 0) return;   // микродрожь пальца — не двигаем
+      if(!panning) return;                        // полный горизонт: только выбор дня
+      ev.preventDefault();
+      const span = base.win.x1 - base.win.x0;
+      const dt = -dx / base.w * (W / PW) * span;  // график идёт ровно за пальцем
+      schedule(() => panWindow(base.win.x0 + dt, base.win.x1 + dt));
+    }
   });
 
-  const stop = ev => {
+  const release = ev => {
+    if(!pts.has(ev.pointerId)) return;
     pts.delete(ev.pointerId);
-    if(pts.size < 2 && pinch){ pinch = null; pinching = false; host.classList.remove("pinching"); }
-    if(!st) return;
-    st = null; panning = false; host.classList.remove("panning");
     try { host.releasePointerCapture(ev.pointerId); } catch(e){}
+    rebase();                                     // 2 -> 1 пальца: опора берётся заново, скачка нет
   };
-  host.addEventListener("pointerup", stop);
-  host.addEventListener("pointercancel", stop);
-  host.addEventListener("pointerleave", stop);
-  /* выбор дня: после перетаскивания click тоже приходит — его пропускаем */
+  host.addEventListener("pointerup", release);
+  host.addEventListener("pointercancel", release);
+
+  /* выбор дня: короткое касание без заметного смещения */
   host.addEventListener("click", ev => {
-    if(panMoved){ panMoved = false; return; }
+    const wasDrag = moved > TAP;
+    moved = 0;
+    if(wasDrag) return;
     if(chartClick) chartClick(ev);
   });
 
+  /* Ctrl/Cmd + колесо и pinch на тачпаде (браузер шлёт его тем же событием) */
   host.addEventListener("wheel", ev => {
     if(current.type !== "time") return;
-    if(!ev.ctrlKey && !ev.metaKey) return;      // без модификатора страница скроллится как обычно
+    if(!ev.ctrlKey && !ev.metaKey) return;        // без модификатора страница скроллится как обычно
     ev.preventDefault();
-    const t = timeAt(ev.clientX);
+    const t = timeAt(ev.clientX), x = ev.clientX;
     const f = Math.min(2, Math.max(.5, Math.pow(1.0022, ev.deltaY)));
-    schedule(() => zoomBy(f, t));
+    schedule(() => zoomToScreen(zoomWin(current), f, t, x));
   }, {passive:false});
 })();
 
