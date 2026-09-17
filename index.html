@@ -99,8 +99,8 @@ p{margin:0}
 .stamp-meta dd{margin:6px 0 0; font-weight:650; font-size:17px; letter-spacing:-.01em}
 
 /* ---------- KPI ---------- */
-/* асимметричная сетка: главный показатель занимает вдвое больше места */
-.kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:var(--sp-4)}
+/* Карточки прогресса работ: равный визуальный приоритет, выделение только по hover */
+.kpis{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--sp-4)}
 .kpi{background:var(--surface); border:0; border-radius:var(--r-lg); padding:var(--sp-6);
      display:flex; flex-direction:column; gap:var(--sp-3); position:relative; box-shadow:var(--shadow)}
 .kpi::before{content:none}
@@ -114,19 +114,6 @@ p{margin:0}
 .bar{height:8px; background:var(--surface-2); border:0; border-radius:var(--r-pill); overflow:hidden}
 .bar i{display:block; height:100%; background:var(--c); border-radius:var(--r-pill)}
 .kpi .k-sub{font-size:12.5px; color:var(--ink-2); line-height:1.45}
-/* главный KPI — синяя карточка на две колонки */
-.kpis .kpi:first-child{grid-column:span 2; background:var(--accent-surface); color:var(--on-accent); box-shadow:none}
-.kpis .kpi:first-child .k-name{color:rgba(255,255,255,.82)}
-.kpis .kpi:first-child .k-name::before{background:rgba(255,255,255,.9)}
-.kpis .kpi:first-child .k-val{font-size:clamp(40px,4.2vw,58px)}
-.kpis .kpi:first-child .k-val > span:not(.k-pct){color:rgba(255,255,255,.72)}
-.kpis .kpi:first-child .k-val .k-pct{color:#fff}
-.kpis .kpi:first-child .k-sub{color:rgba(255,255,255,.82); font-size:13.5px}
-.kpis .kpi:first-child .bar{background:rgba(255,255,255,.24)}
-.kpis .kpi:first-child .bar i{background:#fff}
-.kpis .kpi:first-child .bar .plan-mark{background:#fff; opacity:.9}
-.kpis .kpi:first-child .tag{background:#fff}
-.kpis .kpi:nth-child(6){grid-column:span 2}
 /* бейджи статуса */
 .tag{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; line-height:1.35;
      padding:5px 11px; border:0; border-radius:var(--r-pill); letter-spacing:0;
@@ -231,7 +218,6 @@ td.nm, td.num[style*="font-weight:600"]{letter-spacing:-.01em}
 footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--line); padding-top:var(--sp-4)}
 @media (max-width:1180px){
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .kpis .kpi:first-child, .kpis .kpi:nth-child(6){grid-column:span 2}
 }
 @media (max-width:900px){
   .risks{grid-template-columns:1fr}
@@ -260,7 +246,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .pad{padding:0 18px 20px}
   .kpi{padding:18px; gap:var(--sp-2); border-radius:var(--r-md)}
   .kpi .k-val{font-size:30px}
-  .kpis .kpi:first-child .k-val{font-size:38px}
   [data-icon] > header h2::before{width:20px; height:20px}
   /* табы графиков — горизонтальный свайп вместо переноса */
   #tabs, #period-tabs{flex-wrap:nowrap; overflow-x:auto; max-width:100%; padding-bottom:2px;
@@ -301,7 +286,7 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .tl-text{font-size:12.5px; display:block; margin-top:4px; overflow-wrap:anywhere; color:var(--ink-2)}
   .risk{padding:16px 18px}
 }
-@media (max-width:620px){ .kpis{grid-template-columns:1fr} .kpis .kpi:first-child, .kpis .kpi:nth-child(6){grid-column:span 1} }
+@media (max-width:620px){ .kpis{grid-template-columns:1fr} }
 @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
 
 /* ===== Compact tables: журнал показателей + испытания свай ===== */
@@ -393,8 +378,11 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 .pan button:hover:not(:disabled){background:var(--accent-soft); color:var(--accent)}
 .pan button:disabled{opacity:.35; cursor:default}
 .pan button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
-.chart-box{touch-action:pan-y}
+.chart-box{touch-action:pan-y}      /* вертикальная прокрутка страницы остаётся у браузера */
+.chart-box.pinching{touch-action:none}  /* во время pinch жест обрабатываем сами */
 .chart-box.panning{cursor:grabbing; user-select:none}
+.zoomctl button{font-size:17px; font-weight:600; line-height:1; padding-bottom:2px}
+.zoomctl #zoom-reset{font-size:15px; padding-bottom:0}
 /* кнопка и диалог отчёта */
 .btn-report{margin-left:auto; font:650 13px/1 var(--font-ui); padding:0 22px; height:44px; cursor:pointer;
            background:var(--accent); color:var(--on-accent); border:0; border-radius:var(--r-pill)}
@@ -463,13 +451,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .kpi{ box-shadow:none; border:.75pt solid #E1E8F2; border-radius:5pt; }
   .verdict{ box-shadow:none; border:.75pt solid #E1E8F2; border-radius:5pt; padding:9pt 10pt; }
   .risk{ border-radius:4pt; }
-  /* синие плашки на бумаге не печатаются — только текст */
-  .kpis .kpi:first-child{ background:#fff !important; color:#101A2B !important; }
-  .kpis .kpi:first-child .k-name, .kpis .kpi:first-child .k-sub{ color:#5D6B84 !important; }
-  .kpis .kpi:first-child .k-val, .kpis .kpi:first-child .k-val .k-pct{ color:#101A2B !important; }
-  .kpis .kpi:first-child .k-val span{ color:#8E9BB0 !important; }
-  .kpis .kpi:first-child .bar{ background:#EDF1F8 !important; }
-  .kpis .kpi:first-child .bar i{ background:#0B6BEE !important; }
   [data-icon] > header h2::before{ display:none; }
   .chart-note{ background:none !important; padding:0 !important; }
   .v-list li{ padding:2.5pt 0 2.5pt 9pt; }
@@ -503,10 +484,8 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .print-legend .sw{ width:8px; height:8px; display:inline-block; margin-right:4px; }
   .chart-note{ font-size:7.5pt; }
   .kpis{ grid-template-columns:repeat(3, minmax(0,1fr)); gap:6pt; }
-  .kpis .kpi:first-child, .kpis .kpi:nth-child(6){ grid-column:span 1; }
   .kpi{ padding:7pt 8pt; gap:4pt; }
   .kpi .k-val{ font-size:17pt; }
-  .kpis .kpi:first-child .k-val{ font-size:20pt; }
   .risks{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:7pt; }
   .two-col{ grid-template-columns:1fr 1fr; gap:9pt; }
   .v-list li{ font-size:8pt; line-height:1.45; }
@@ -572,8 +551,16 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 .statusbar .sb-right{ margin-left:auto; display:flex; align-items:center; gap:14px }
 .statusbar .sb-upd{ color:var(--ink-3); font-size:11px }
 /* ---------- 9 / 10. KPI ---------- */
-.kpi:hover{ transform:translateY(-2px) }
-.kpis .kpi:first-child:hover{ transform:translateY(-2px) }
+@media (hover:hover) and (pointer:fine){
+  .kpi:hover{ transform:translateY(-3px); background:var(--surface);
+    box-shadow:0 1px 2px rgba(16,26,43,.04), 0 14px 32px -20px rgba(16,26,43,.5);
+    outline:1px solid var(--line) }
+  :root[data-theme="dark"] .kpi:hover,
+  :root:not([data-theme="light"]) .kpi:hover{ outline-color:var(--line-strong) }
+}
+.kpi{ transition:transform 200ms var(--ease), box-shadow 200ms var(--ease),
+      background-color 200ms var(--ease), outline-color 200ms var(--ease);
+      outline:1px solid transparent; outline-offset:0 }
 .kpi .k-num{ font-family:inherit; font-weight:inherit; font-size:inherit }
 .bar{ height:8px; position:relative; overflow:visible }
 .bar i{ transition:width 420ms var(--ease) }
@@ -583,7 +570,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   border:0; border-radius:var(--r-pill); padding:5px 11px;
   background:color-mix(in srgb, currentColor 12%, transparent) }
 .cp-tag::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor }
-.kpis .kpi:first-child .cp-tag{ background:#fff }
 #sched tbody tr.is-critical td:first-child{ box-shadow:inset 3px 0 0 var(--crit); border-radius:3px 0 0 3px }
 #works tbody tr.row-hl td, #sched tbody tr.row-hl td{ background:var(--surface-2) }
 
@@ -821,6 +807,11 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
         <div class="pan">
           <button type="button" id="pan-prev" aria-label="Сдвинуть влево">◀</button>
           <button type="button" id="pan-next" aria-label="Сдвинуть вправо">▶</button>
+        </div>
+        <div class="pan zoomctl">
+          <button type="button" id="zoom-out" aria-label="Уменьшить масштаб" title="Уменьшить масштаб">−</button>
+          <button type="button" id="zoom-in" aria-label="Увеличить масштаб" title="Увеличить масштаб">+</button>
+          <button type="button" id="zoom-reset" aria-label="Сбросить масштаб" title="Сбросить масштаб">⟲</button>
         </div>
         <div class="rs">
           <span class="mono lbl" id="zoom-from"></span>
@@ -1568,21 +1559,64 @@ function panBy(frac){
   panWindow(z.x0 + span * frac, z.x1 + span * frac);
 }
 
+/* ---------- масштаб временной оси ----------
+   Меняется только окно просмотра графика [x0..x1]; данные, расчёты и разметка осей
+   не затрагиваются — draw() перерисовывает тот же график в новых границах.
+   Минимальное окно — 5 суток, максимальное — полный горизонт графика. */
+const MIN_SPAN = 5 * DAY;
+let pinching = false;
+function zoomWindow(base, factor, anchorT){
+  if(current.type !== "time") return;
+  const f = {x0:current.x0, x1:current.x1}, full = f.x1 - f.x0;
+  const baseSpan = Math.max(1, base.x1 - base.x0);
+  let span = Math.max(MIN_SPAN, Math.min(full, baseSpan * factor));
+  const a = anchorT == null ? (base.x0 + base.x1) / 2
+          : Math.min(base.x1, Math.max(base.x0, anchorT));
+  const k = (a - base.x0) / baseSpan;
+  let x0 = a - span * k, x1 = x0 + span;
+  if(x0 < f.x0){ x0 = f.x0; x1 = x0 + span; }
+  if(x1 > f.x1){ x1 = f.x1; x0 = x1 - span; }
+  zoom[current.id] = {x0, x1};
+  draw();
+}
+const zoomBy = (factor, anchorT) => zoomWindow(zoomWin(current), factor, anchorT);
+function resetZoom(){
+  if(current.type !== "time") return;
+  zoom[current.id] = {x0:current.x0, x1:current.x1};
+  draw();
+}
+
 const zoom = {};                       // окно просмотра по id графика: {x0, x1}
 const zoomWin = c => {
   const z = zoom[c.id];
   return (z && z.x0 != null) ? z : {x0:c.x0, x1:c.x1};
 };
 const hidden = new Set();
+/* выбранный день: {id, t} для временных графиков, {id, i} для столбчатых.
+   Заполняется только по клику/тапу, наведение мыши его не меняет. */
+let sel = null;
 const box = document.getElementById("chart-box");
 const tip = document.getElementById("tip");
+let panMoved = false;                  // клик после перетаскивания не считается выбором дня
+let chartClick = null;                 // обработчик выбора дня текущей отрисовки
+function clearSelection(){
+  sel = null;
+  const svg = box.querySelector("svg");
+  if(svg) svg.querySelectorAll(".sel-mark").forEach(nd => nd.setAttribute("opacity", 0));
+  tip.style.opacity = 0; tip.classList.remove("on");
+}
+/* Клик вне графика закрывает блок показателей дня. Кнопки масштаба, панорамирования
+   и легенда относятся к самому графику — они выбор не сбрасывают. */
+document.addEventListener("click", ev => {
+  if(sel && !(ev.target.closest && ev.target.closest('[data-icon="chart"]'))) clearSelection();
+});
 
 document.getElementById("tabs").innerHTML = CH.map((c,i) =>
   `<button role="tab" data-id="${c.id}" aria-selected="${i===0}">${c.name}</button>`).join("");
 document.getElementById("tabs").addEventListener("click", e => {
   const b = e.target.closest("button"); if(!b) return;
   current = CH.find(c => c.id === b.dataset.id);
-  hidden.clear();
+  hidden.clear(); sel = null;
   [...e.currentTarget.children].forEach(x => x.setAttribute("aria-selected", x === b));
   draw();
 });
@@ -1833,7 +1867,15 @@ function draw(){
   const hlDot = el("circle", {r:RDOT + 2.2, fill:surf, "stroke-width":SW + .6, opacity:0,
     "pointer-events":"none"});
   svg.appendChild(hlDot);
-  const hit = el("rect", {x:PAD.l, y:PAD.t-8, width:PW, height:PH+8, fill:"transparent"});
+  /* маркеры выбранного дня — отдельно от hover, чтобы выбор не сбрасывался курсором */
+  const selLine = el("line", {y1:PAD.t-6, y2:PAD.t+PH, stroke:css("--accent"), "stroke-width":1.5,
+    opacity:0, "pointer-events":"none", class:"sel-mark"});
+  svg.appendChild(selLine);
+  const selDot = el("circle", {r:RDOT + 3.4, fill:surf, "stroke-width":SW + 1.4, opacity:0,
+    "pointer-events":"none", class:"sel-mark"});
+  svg.appendChild(selDot);
+  const hit = el("rect", {x:PAD.l, y:PAD.t-8, width:PW, height:PH+8, fill:"transparent",
+    style:"cursor:pointer"});
   svg.appendChild(hit);
 
   box.querySelector("svg")?.remove();
@@ -1857,14 +1899,23 @@ function draw(){
     }catch(e){}
   }
 
-  const show = ev => {
-    if(panning) return;
+  /* ---------- определение дня под указателем ----------
+     Расчёт координаты и состава показателей не изменился — он лишь разделён
+     на выбор дня (pickAt) и сборку его показателей (info), чтобы одни и те же
+     величины можно было показать и по клику, и восстановить после перерисовки. */
+  const pickAt = clientX => {
     const b = svg.getBoundingClientRect();
-    const px = (ev.clientX - b.left) / b.width * W;
+    const px = (clientX - b.left) / b.width * W;
+    if(isTime) return {t: Math.min(ZX.x1, Math.max(ZX.x0,
+      ZX.x0 + Math.round((px - PAD.l) / PW * (ZX.x1 - ZX.x0) / DAY) * DAY))};
+    return {i: Math.max(0, Math.min(n - 1, current.type === "line"
+      ? Math.round((px - PAD.l) / (PW / (n - 1)))
+      : Math.floor((px - PAD.l) / bandW)))};
+  };
+  const info = k => {
     let cx, head, rows, hlAt = {}, extra = [];
     if(isTime){
-      const t = Math.min(ZX.x1, Math.max(ZX.x0,
-        ZX.x0 + Math.round((px - PAD.l) / PW * (ZX.x1 - ZX.x0) / DAY) * DAY));
+      const t = k.t;
       cx = xOfDate(t);
       head = "На " + dfull(iso(t));
       rows = vis.map(s => {
@@ -1888,33 +1939,68 @@ function draw(){
         if(current.rateText) extra.push(["Темп", css("--ink-2"), current.rateText()]);
       }
     } else {
-      const i = Math.max(0, Math.min(n - 1, current.type === "line"
-        ? Math.round((px - PAD.l) / (PW / (n - 1)))
-        : Math.floor((px - PAD.l) / bandW)));
+      const i = k.i;
       cx = X(i);
       head = "Работы " + wpFull(DS[i]) + " (сводка " + dshort(DS[i].d) + ")";
       rows = vis.map(s => [s.label, s.color, s.data[i], ""]);
     }
-    cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.setAttribute("opacity", 1);
-    if(hlAt.x != null){
-      hlDot.setAttribute("cx", hlAt.x); hlDot.setAttribute("cy", hlAt.y);
-      hlDot.setAttribute("stroke", hlAt.c); hlDot.setAttribute("opacity", 1);
+    return {cx, head, rows, hlAt, extra};
+  };
+
+  /* наведение — только лёгкий отклик: пунктир и увеличенная точка, без блока показателей */
+  const paintHover = p => {
+    cross.setAttribute("x1", p.cx); cross.setAttribute("x2", p.cx);
+    cross.setAttribute("opacity", .5);
+    if(p.hlAt.x != null){
+      hlDot.setAttribute("cx", p.hlAt.x); hlDot.setAttribute("cy", p.hlAt.y);
+      hlDot.setAttribute("stroke", p.hlAt.c); hlDot.setAttribute("opacity", .7);
     } else hlDot.setAttribute("opacity", 0);
-    tip.innerHTML = `<div class="tip-t">${head}</div>` + rows.map(([l, c, v, sfx]) =>
+  };
+  const clearHover = () => { cross.setAttribute("opacity", 0); hlDot.setAttribute("opacity", 0); };
+
+  /* выбор дня — показатели именно этой даты */
+  const paintSel = p => {
+    selLine.setAttribute("x1", p.cx); selLine.setAttribute("x2", p.cx); selLine.setAttribute("opacity", 1);
+    if(p.hlAt.x != null){
+      selDot.setAttribute("cx", p.hlAt.x); selDot.setAttribute("cy", p.hlAt.y);
+      selDot.setAttribute("stroke", p.hlAt.c); selDot.setAttribute("opacity", 1);
+    } else selDot.setAttribute("opacity", 0);
+    tip.innerHTML = `<div class="tip-t">${p.head}</div>` + p.rows.map(([l, c, v, sfx]) =>
       `<div class="tip-row"><span class="sw" style="background:${c}"></span>${l}
        <b>${v == null ? "нет данных" : nb(v, Number.isInteger(v) ? 0 : 1) + " " + current.unit + sfx}</b></div>`).join("")
-      + (extra.length ? `<div class="tip-sep"></div>` + extra.map(([l, c, v]) =>
+      + (p.extra.length ? `<div class="tip-sep"></div>` + p.extra.map(([l, c, v]) =>
         `<div class="tip-row dev"><span class="sw" style="background:${c}"></span>${l}<b>${v}</b></div>`).join("") : "");
     tip.style.opacity = 1;
     tip.classList.add("on");
-    tip.style.left = Math.min(Math.max(cx / W * b.width + 14, 8), b.width - tip.offsetWidth - 8) + "px";
+    const bw = svg.getBoundingClientRect().width;
+    tip.style.left = Math.min(Math.max(p.cx / W * bw + 14, 8), bw - tip.offsetWidth - 8) + "px";
   };
-  hit.addEventListener("pointermove", show);
-  hit.addEventListener("pointerdown", show);
-  svg.addEventListener("pointerleave", () => {
-    tip.style.opacity = 0; tip.classList.remove("on");
-    cross.setAttribute("opacity", 0); hlDot.setAttribute("opacity", 0);
+
+  hit.addEventListener("pointermove", ev => {
+    if(panning || pinching) return;
+    paintHover(info(pickAt(ev.clientX)));
   });
+  svg.addEventListener("pointerleave", clearHover);
+  /* показатели дня открываются кликом или тапом; повторное нажатие закрывает */
+  chartClick = ev => {
+    const b = svg.getBoundingClientRect();
+    const px = (ev.clientX - b.left) / b.width * W;
+    if(px < PAD.l - 6 || px > PAD.l + PW + 6) return;   /* клик мимо поля графика */
+    const k = pickAt(ev.clientX);
+    const same = sel && sel.id === current.id &&
+      (isTime ? sel.t === k.t : sel.i === k.i);
+    if(same){ clearSelection(); return; }
+    sel = Object.assign({id:current.id}, k);
+    paintSel(info(k));
+  };
+
+  /* восстановление выбора после перерисовки: зум, панорамирование, смена периода */
+  if(sel && sel.id === current.id){
+    const inView = isTime ? (sel.t >= ZX.x0 && sel.t <= ZX.x1) : (sel.i >= 0 && sel.i < n);
+    if(inView) paintSel(info(sel));
+    else { selLine.setAttribute("opacity", 0); selDot.setAttribute("opacity", 0);
+           tip.style.opacity = 0; tip.classList.remove("on"); }
+  } else { tip.style.opacity = 0; tip.classList.remove("on"); }
 
   const lg = document.getElementById("chart-legend");
   lg.innerHTML = sets.length < 2 ? "" : sets.map(s =>
@@ -1936,6 +2022,9 @@ function renderZoomBar(){
       `<button role="tab" data-z="${k}">${l}</button>`).join("");
     document.getElementById("pan-prev").addEventListener("click", () => panBy(-0.5));
     document.getElementById("pan-next").addEventListener("click", () => panBy(0.5));
+    document.getElementById("zoom-in").addEventListener("click", () => zoomBy(1/1.4));
+    document.getElementById("zoom-out").addEventListener("click", () => zoomBy(1.4));
+    document.getElementById("zoom-reset").addEventListener("click", resetZoom);
     document.getElementById("zoom-tabs").addEventListener("click", e => {
       const b = e.target.closest("button"); if(!b) return;
       const p = ZOOM_PRESETS.find(x => x[0] === b.dataset.z);
@@ -1978,6 +2067,10 @@ function renderZoomBar(){
   const atStart = z.x0 <= full.x0 + DAY/2, atEnd = z.x1 >= full.x1 - DAY/2;
   document.getElementById("pan-prev").disabled = atStart;
   document.getElementById("pan-next").disabled = atEnd;
+  const spanD = z.x1 - z.x0;
+  document.getElementById("zoom-in").disabled = spanD <= MIN_SPAN + DAY / 2;
+  document.getElementById("zoom-out").disabled = atStart && atEnd;
+  document.getElementById("zoom-reset").disabled = atStart && atEnd;
   document.getElementById("zoom-from").textContent = dfull(iso(z.x0));
   document.getElementById("zoom-to").textContent = dfull(iso(z.x1));
   const cur = Math.round((z.x1 - z.x0) / DAY);
@@ -1987,12 +2080,43 @@ function renderZoomBar(){
   });
 }
 
-/* перетаскивание графика влево-вправо */
-(function initPan(){
+/* ---------- жесты на графике ----------
+   Перетаскивание — одним указателем; масштаб — кнопками, Ctrl/Cmd + колесом
+   (тачпадный pinch браузер присылает тем же событием с ctrlKey) и двумя
+   пальцами на экране. Масштабируется только временная ось графика:
+   preventDefault не даёт браузеру увеличить саму страницу. */
+(function initGestures(){
   const host = document.getElementById("chart-box");
-  let st = null;
+  const pts = new Map();
+  let st = null, pinch = null, raf = 0, pending = null;
+  const run = () => { raf = 0; const fn = pending; pending = null; if(fn) fn(); };
+  const schedule = fn => { pending = fn; if(!raf) raf = requestAnimationFrame(run); };
+
+  /* дата под указателем — чтобы масштаб шёл «от курсора», а не от центра */
+  const timeAt = clientX => {
+    const svg = host.querySelector("svg"); if(!svg) return null;
+    const b = svg.getBoundingClientRect();
+    const px = (clientX - b.left) / b.width * W;
+    const z = zoomWin(current);
+    const k = Math.min(1, Math.max(0, (px - PAD.l) / PW));
+    return z.x0 + k * (z.x1 - z.x0);
+  };
+
   host.addEventListener("pointerdown", ev => {
+    pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
     if(current.type !== "time") return;
+    if(pts.size === 2){
+      /* начался pinch — перетаскивание отменяем */
+      st = null; panning = false; host.classList.remove("panning");
+      const [a, b] = [...pts.values()];
+      pinch = {d:Math.hypot(a.x - b.x, a.y - b.y) || 1, z:zoomWin(current),
+               t:timeAt((a.x + b.x) / 2)};
+      pinching = true;
+      host.classList.add("pinching");
+      return;
+    }
+    if(pts.size > 1) return;
+    panMoved = false;
     const z = zoomWin(current);
     if(z.x0 <= current.x0 && z.x1 >= current.x1) return;   // весь горизонт — двигать некуда
     st = {x:ev.clientX, z, w:host.getBoundingClientRect().width};
@@ -2000,14 +2124,27 @@ function renderZoomBar(){
     host.classList.add("panning");
     try { host.setPointerCapture(ev.pointerId); } catch(e){}
   });
+
   host.addEventListener("pointermove", ev => {
+    if(pts.has(ev.pointerId)) pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if(pinch && pts.size >= 2){
+      ev.preventDefault();
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      schedule(() => zoomWindow(pinch.z, pinch.d / d, pinch.t));
+      return;
+    }
     if(!st) return;
     ev.preventDefault();
+    if(Math.abs(ev.clientX - st.x) > 4) panMoved = true;
     const span = st.z.x1 - st.z.x0;
     const dt = -(ev.clientX - st.x) / st.w * (W / PW) * span;
     panWindow(st.z.x0 + dt, st.z.x1 + dt);
   });
+
   const stop = ev => {
+    pts.delete(ev.pointerId);
+    if(pts.size < 2 && pinch){ pinch = null; pinching = false; host.classList.remove("pinching"); }
     if(!st) return;
     st = null; panning = false; host.classList.remove("panning");
     try { host.releasePointerCapture(ev.pointerId); } catch(e){}
@@ -2015,6 +2152,20 @@ function renderZoomBar(){
   host.addEventListener("pointerup", stop);
   host.addEventListener("pointercancel", stop);
   host.addEventListener("pointerleave", stop);
+  /* выбор дня: после перетаскивания click тоже приходит — его пропускаем */
+  host.addEventListener("click", ev => {
+    if(panMoved){ panMoved = false; return; }
+    if(chartClick) chartClick(ev);
+  });
+
+  host.addEventListener("wheel", ev => {
+    if(current.type !== "time") return;
+    if(!ev.ctrlKey && !ev.metaKey) return;      // без модификатора страница скроллится как обычно
+    ev.preventDefault();
+    const t = timeAt(ev.clientX);
+    const f = Math.min(2, Math.max(.5, Math.pow(1.0022, ev.deltaY)));
+    schedule(() => zoomBy(f, t));
+  }, {passive:false});
 })();
 
 document.getElementById("chart-legend").addEventListener("click", e => {
