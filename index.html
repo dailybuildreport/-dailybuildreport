@@ -790,19 +790,16 @@ html{scrollbar-gutter:stable}
 .wrap{max-width:1240px}
 
 /* ---------- экраны ---------- */
-/* Показан ровно один экран. Переключение — смена атрибута на <body>,
-   без перезагрузки и без пересчёта размеров графика. */
+/* Все пять экранов постоянно живут в DOM. Показан ровно один: он и только он
+   несёт класс .is-active. Неактивные просто скрыты — их содержимое не
+   удаляется, не пересобирается и никуда не переносится, поэтому открывать
+   любой раздел можно сколько угодно раз с одинаковым результатом. */
 .view{display:none; flex-direction:column; gap:var(--sp-6); min-width:0}
-body[data-view="overview"] #view-overview,
-body[data-view="journal"]  #view-journal,
-body[data-view="risks"]    #view-risks,
-body[data-view="timeline"] #view-timeline,
-body[data-view="report"]   #view-report{display:flex}
+.view.is-active{display:flex}
 .view > *{min-width:0}
-@media (prefers-reduced-motion: no-preference){
-  @keyframes view-in{from{opacity:.001} to{opacity:1}}
-  .view{animation:view-in 130ms var(--ease, ease) both}
-}
+/* Видимость экрана держится только на display. Прозрачность здесь не
+   анимируется: любая анимация перезапускалась бы при каждом возврате в
+   раздел и на время перехода гасила бы рабочую область. */
 
 /* ---------- левое меню (desktop / tablet) ---------- */
 .sidebar{
@@ -2870,13 +2867,30 @@ function highlightSeries(k){
   lg.addEventListener("pointerleave", () => rows().forEach(tr => tr.classList.remove("row-hl")));
 })();
 /* --- 1. последовательное появление интерфейса --- */
-/* Появление проигрывается один раз для каждого экрана — при первом показе. */
+/* Появление проигрывается один раз для каждого экрана — при первом показе.
+   Класс .rv статически задаёт opacity:0 и рассчитывает на анимацию rv-in.
+   Браузер перезапускает анимацию каждый раз, когда элемент возвращается в
+   поток из display:none, поэтому класс снимается сразу после проигрывания:
+   иначе повторный вход в раздел снова гасил бы всё его содержимое на время
+   задержки и раздел выглядел бы пустым. */
 function revealScreen(host){
-  if(!ANIM || !host || host.dataset.rv) return;
+  if(!host || host.dataset.rv) return;
   host.dataset.rv = "1";
+  if(!ANIM) return;
   [...host.children]
     .filter(el => !el.classList.contains("print-only"))
-    .forEach((el, i) => { el.style.setProperty("--i", Math.min(i, 11)); el.classList.add("rv"); });
+    .forEach((el, i) => {
+      const step = Math.min(i, 11);
+      el.style.setProperty("--i", step);
+      el.classList.add("rv");
+      const done = () => { el.classList.remove("rv"); el.style.removeProperty("--i"); };
+      el.addEventListener("animationend", ev => {
+        if(ev.target === el && ev.animationName === "rv-in") done();
+      });
+      /* страховка: если анимация не стартовала или была прервана переходом
+         в другой раздел, класс всё равно снимается и экран остаётся видимым */
+      setTimeout(done, step * 58 + 700);
+    });
 }
 
 /* ============ Выбор периода отчёта ============ */
@@ -3301,16 +3315,41 @@ const navItem = v =>
 document.getElementById("sb-nav").innerHTML = VIEWS.map(navItem).join("");
 document.getElementById("bot-nav").innerHTML = VIEWS.map(v => `<li>${navItem(v)}</li>`).join("");
 
+function clearReveal(host){
+  host.querySelectorAll(".rv").forEach(el => {
+    el.classList.remove("rv");
+    el.style.removeProperty("--i");
+  });
+}
 function showView(id, push){
   const v = VIEWS.some(x => x.id === id) ? id : "overview";
+  const host = document.getElementById("view-" + v);
+  if(!host) return;
   document.body.dataset.view = v;
+  /* Сначала активное состояние снимается со всех экранов, затем ставится
+     ровно одному. Содержимое разделов при этом не трогается вообще. */
+  document.querySelectorAll(".view").forEach(el => {
+    const on = el === host;
+    el.classList.toggle("is-active", on);
+    /* Покидаемый экран сразу теряет классы появления: если уйти с него до
+       конца анимации, при возврате она бы запустилась заново и снова
+       спрятала содержимое. */
+    if(!on) clearReveal(el);
+  });
   document.querySelectorAll(".nav-i[data-nav]").forEach(b => {
     if(b.dataset.nav === v) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
   /* поля дат отчёта подхватывают период, выбранный на «Обзоре» */
   if(v === "report") syncRepDates();
-  revealScreen(document.getElementById("view-" + v));
+  revealScreen(host);
+  /* Ширина контейнера графика известна только после того, как экран перестал
+     быть display:none, поэтому перерисовка идёт следующим кадром. draw()
+     сохраняет выбранный период, масштаб, скрытые серии и выбранный день. */
+  if(v === "overview") requestAnimationFrame(() => {
+    const cb = document.getElementById("chart-box");
+    if(cb && cb.getBoundingClientRect().width > 0) draw();
+  });
   /* Адрес меняем через history: присваивание location.hash заставило бы браузер
      прыгнуть к одноимённому элементу (#risks, #timeline, #report существуют в DOM). */
   if(push !== false && location.hash.slice(1) !== v){
@@ -3343,6 +3382,9 @@ window.addEventListener("popstate", fromHash);
 fromHash();
 if(!location.hash) try{ history.replaceState(null, "", "#overview"); }catch(err){}
 window.addEventListener("load", toTop);
+/* Последняя страховка жизненного цикла: через две секунды после загрузки
+   классов появления не остаётся ни на одном экране, что бы ни случилось. */
+setTimeout(() => document.querySelectorAll(".view").forEach(clearReveal), 2000);
 
 </script>
 </body>
