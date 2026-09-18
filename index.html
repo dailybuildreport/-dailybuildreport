@@ -196,6 +196,21 @@ td.nm, td.num[style*="font-weight:600"]{letter-spacing:-.01em}
 .tip-row{display:flex; align-items:center; gap:7px; padding:1.5px 0}
 .tip-row b{margin-left:auto; font-variant-numeric:tabular-nums; font-family:var(--font-ui); font-weight:600}
 .log-scroll{max-height:520px; overflow-y:auto}
+/* Журнал — рабочее окно во всю высоту экрана: панель ограничена высотой viewport,
+   прокручиваются только строки таблицы, а не страница целиком. Заголовок раздела,
+   переключатели периода и поиск остаются в шапке панели, шапка колонок — sticky.
+   Ширина и горизонтальные границы панели не меняются: трогаем только высоту. */
+@media (min-width:701px){
+  .journal{display:flex; flex-direction:column; max-height:calc(100vh - 32px)}
+  .journal > header{flex:none}
+  .journal .log-scroll{flex:1 1 auto; max-height:none; min-height:220px;
+                       overflow:auto; overscroll-behavior:contain}
+  #log thead th{position:sticky; top:0; z-index:2; background:var(--surface);
+                box-shadow:inset 0 -1px 0 var(--line)}
+}
+@supports (height:100dvh){
+  @media (min-width:701px){ .journal{max-height:calc(100dvh - 32px)} }
+}
 /* ---------- журнал: числовые колонки по размеру чисел, комментарий — остальное ---------- */
 #log{table-layout:fixed; min-width:1120px}
 #log th, #log td{padding:9px 8px}
@@ -295,6 +310,30 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .range-bar{width:100%}
   .range-bar .rng{flex:1}
   .range-bar input[type="date"]{width:100%}
+  /* ---------- выбор периода: цельный segmented control ----------
+     Четыре сектора делят ширину карточки поровну. Форму и скругление задаёт
+     внешний контейнер, он же обрезает вложенные сектора (overflow:hidden), поэтому
+     активный сектор закрашивает свою четверть целиком и не выглядит «таблеткой
+     внутри таблетки». Ширина и боковые поля — как у полей дат и кнопки отчёта. */
+  #range-tabs{
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:0;
+    flex:0 0 100%; width:100%; max-width:100%;
+    background:var(--surface-2); border-radius:var(--r-sm); overflow:hidden;
+  }
+  /* Кегль привязан к ширине экрана: на узких телефонах самая длинная подпись
+     («Произвольно») должна помещаться в свою четверть без переноса и обрезки. */
+  #range-tabs button{
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    width:100%; min-width:0; min-height:42px; padding:0 3px;
+    font-size:clamp(8.4px, calc(3.05vw - 1.9px), 12.5px); letter-spacing:-.02em;
+    white-space:nowrap; border-radius:0; box-shadow:none;
+  }
+  #range-tabs button + button{box-shadow:inset 1px 0 0 var(--line)}
+  #range-tabs button:hover{background:transparent; color:var(--ink-2); transform:none}
+  #range-tabs button[aria-selected="true"]{
+    background:var(--accent); color:var(--on-accent); border-radius:0; box-shadow:none;
+  }
+  #range-tabs button[aria-selected="true"] + button{box-shadow:none}
   .chart-legend{gap:6px 12px; font-size:11.5px}
   /* на телефоне блок показателей дня не накрывает график, а встаёт под ним */
   .tip{position:static; left:auto !important; top:auto; width:100%; min-width:0; max-width:none;
@@ -331,9 +370,11 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 
 /* ===== Compact tables: журнал показателей + испытания свай ===== */
 /* Таблицы должны полностью помещаться в собственные блоки без внутренней прокрутки. */
-#journal, #tests,
-.journal, .pile-tests, .tests-table,
-[data-section="journal"], [data-section="pile-tests"]{
+/* Журнал исключён из этого правила намеренно: с версии от 18.09 он работает как
+   окно на высоту экрана с прокруткой строк внутри, поэтому ему нельзя принудительно
+   снимать max-height и overflow. Таблица испытаний свай — по-прежнему в поток. */
+#tests, .pile-tests, .tests-table,
+[data-section="pile-tests"]{
   overflow: visible !important;
   max-height: none !important;
 }
@@ -368,7 +409,7 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 }
 
 
-.journal, .pile-tests{overflow:visible!important;max-height:none!important;height:auto!important}
+.pile-tests{overflow:visible!important;max-height:none!important;height:auto!important}
 .journal [style*="overflow"], .pile-tests [style*="overflow"]{overflow:visible!important;max-height:none!important}
 .journal table, .pile-tests table{width:100%!important;table-layout:fixed!important;font-size:11px!important}
 .journal th,.journal td,.pile-tests th,.pile-tests td{
@@ -508,6 +549,9 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   /* панель динамики рвём только между графиками, сам график не разрезается */
   .panel:has(#print-charts){ break-inside:auto; page-break-inside:auto; }
   .log-scroll{ max-height:none !important; overflow:visible !important; }
+  /* на печати журнал не «окно», а обычный поток: высота по содержимому */
+  .journal{ display:block !important; max-height:none !important; }
+  #log thead th{ position:static !important; box-shadow:none !important; }
   .scroll{ overflow:visible !important; }
   table{ font-size:7.5pt; width:100%; }
   th, td{ padding:3pt 4pt; }
@@ -577,24 +621,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 .tabs button:hover, .pan button:hover:not(:disabled), .btn-report:hover{ transform:translateY(-1px) }
 .lg:hover{ opacity:.82 }
 
-/* ---------- 8. статусная строка объекта ---------- */
-.statusbar{
-  display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-3) var(--sp-6);
-  background:var(--surface); border:0; border-radius:var(--r-lg);
-  padding:var(--sp-4) var(--sp-6); box-shadow:var(--shadow);
-  font-size:12px; font-variant-numeric:tabular-nums;
-}
-.statusbar .sb-lbl{ font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3) }
-.statusbar .sb-state{ display:inline-flex; align-items:center; gap:var(--sp-2); font-weight:650;
-  letter-spacing:.04em; text-transform:uppercase; font-size:11.5px; color:var(--lvl);
-  background:color-mix(in srgb, var(--lvl) 12%, transparent); border-radius:var(--r-pill); padding:7px 14px }
-.sb-dot{ width:8px; height:8px; border-radius:50%; background:currentColor; flex:none }
-.statusbar .sb-m{ display:inline-flex; align-items:baseline; gap:var(--sp-2); color:var(--ink-3);
-  font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase }
-.statusbar .sb-m b{ font-weight:650; font-size:13.5px; letter-spacing:-.01em; color:var(--ink) }
-.statusbar .sb-m b.neg{ color:var(--crit) } .statusbar .sb-m b.pos{ color:var(--good) }
-.statusbar .sb-right{ margin-left:auto; display:flex; align-items:center; gap:14px }
-.statusbar .sb-upd{ color:var(--ink-3); font-size:11px }
 /* ---------- 9 / 10. KPI ---------- */
 @media (hover:hover) and (pointer:fine){
   .kpi:hover{ transform:translateY(-3px); background:var(--surface);
@@ -693,7 +719,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 
 /* ---------- 16. мобильная адаптация нового слоя ---------- */
 @media (max-width:700px){
-  .statusbar{ gap:var(--sp-2) var(--sp-4); padding:var(--sp-4); font-size:11px; border-radius:var(--r-md) }
   .rb-actions{ width:100%; margin-left:0 }
   .rb-actions .btn-ghost, .rb-actions .btn-report{ flex:1; min-width:140px }
   #report .rep-log{ min-width:0; font-size:12px }
@@ -707,9 +732,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   #report .rep-log td.txt{ display:block; margin-top:var(--sp-2); padding-top:var(--sp-2);
     border-top:1px solid var(--line); color:var(--ink-2); min-width:0 }
   #report .rep-log td.txt::before{ display:block; margin-bottom:3px }
-  .statusbar .sb-lbl, .statusbar .sb-upd, .statusbar .sb-opt{ display:none }
-  .statusbar .sb-right{ margin-left:auto }
-  .statusbar .sb-m{ font-size:9.5px } .statusbar .sb-m b{ font-size:11.5px }
   .tl-row{ padding-left:22px }
   /* Журнал на телефоне — карточками, как «Виды работ»: 14 колонок в 390 px
      не помещаются, поэтому таблица разворачивается в блоки без прокрутки вбок. */
@@ -765,7 +787,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   #report .rep-log{ min-width:0 !important; font-size:7pt }
   #report .rep-t th, #report .rep-t td{ padding:3pt 4pt }
   .rep-h{ font-size:10pt; margin:8pt 0 4pt }
-  .statusbar{ display:none !important }
   .rv, .soft{ opacity:1 !important; animation:none !important; transform:none !important }
   .tl-row::before, .tl-row::after{ display:none }
   .tl-row{ padding-left:0 }
@@ -791,8 +812,6 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
       <div><dt>Численность, чел./сут</dt><dd class="mono">50 (ИТР 10 / раб. 40)</dd></div>
     </dl>
   </header>
-
-  <div class="statusbar" id="statusbar"></div>
 
   <section class="verdict" id="verdict">
     <div class="range-bar">
@@ -1498,7 +1517,7 @@ risks.push(...[
   ["Площадка · накопление грунта от бурения", "Средний", "--warn",
    "Сокращается рабочая площадь, что ограничивает работу буровых установок и кранов. Вывоз выведен из суточной отчётности 01.09."],
 ]);
-LAST_RISKS = risks; NEW_CRIT = newCritRisks(risks);
+NEW_CRIT = newCritRisks(risks);
 document.getElementById("risks").innerHTML = risks.map(([n,l,c,t],i) => `
   <article class="risk soft" style="--lvl:var(${c}); --i:${i}">
     <h3>${n}</h3>
@@ -2362,7 +2381,7 @@ document.getElementById("chart-legend").addEventListener("click", e => {
 var MQ_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)");
 var ANIM = !MQ_MOTION.matches;
 MQ_MOTION.addEventListener("change", e => { ANIM = !e.matches; });
-var FIRST_RENDER = true, KPI_PREV = {}, NUM_PREV = {}, LAST_RISKS = [], NEW_CRIT = new Set(), SEEN_CRIT = null;
+var FIRST_RENDER = true, KPI_PREV = {}, NUM_PREV = {}, NEW_CRIT = new Set(), SEEN_CRIT = null;
 var DRAWN = new Set();                 /* графики, у которых уже проигралась прорисовка */
 var TODAY = (function(){ const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); })();
@@ -2421,28 +2440,6 @@ function tlKind(text){
   if(/отстава|остановлен|разрыв|проблем|не начат|сокращени|опрокид|чрезвычай|происшеств|авари/i.test(t)) return "tl-crit";
   if(/заверш|закрыт|выполнен|достигнут|пройден|получен/i.test(t)) return "tl-done";
   return "";
-}
-/* --- 8. статусная строка объекта: сводка уже рассчитанных величин --- */
-function renderStatus(){
-  const lv = LAST_RISKS.map(r => r[1]);
-  const st = lv.includes("Критический") ? ["--crit", "Критический"]
-           : lv.some(x => x === "Высокий" || x === "Средний") ? ["--warn-ink", "Требует внимания"]
-           : ["--good", "Норма"];
-  const crew = last.itr_d + last.itr_n + last.wrk_d + last.wrk_n;
-  const met = (lbl, val, nk, dec, sign) =>
-    `<span class="sb-m">${lbl}<b class="${sign && val < 0 ? "neg" : sign && val > 0 ? "pos" : ""}"` +
-    ` data-num="${val}" data-nk="${nk}" data-dec="${dec}"${sign ? ' data-sign="1"' : ""}>` +
-    `${(sign && val > 0 ? "+" : "") + nb(val, dec)}</b></span>`;
-  document.getElementById("statusbar").innerHTML =
-    `<span class="sb-lbl">Статус объекта</span>` +
-    `<span class="sb-state" style="--lvl:var(${st[0]})"><i class="sb-dot"></i>${st[1]}</span>` +
-    met("БНС", A.bns.dev, "sb-bns", 0, true) +
-    met("СВГ", A.dw.dev, "sb-dw", Number.isInteger(A.dw.dev) ? 0 : 1, true) +
-    `<span class="sb-m sb-opt">Откос<b>${nb(A.slope.fact / A.slope.total * 100, 1)} %</b></span>` +
-    `<span class="sb-m">Прогноз БНС<b>${dfull(A.bns.eta_plan)}</b></span>` +
-    met("Чел./сут", crew, "sb-crew", 0, false).replace('class="sb-m"', 'class="sb-m sb-opt"') +
-    `<span class="sb-right"><span class="sb-upd">обновлено ${dfull(last.d)}</span></span>`;
-  document.getElementById("statusbar").style.setProperty("--lvl", "var(" + st[0] + ")");
 }
 /* --- 11. связь таблиц и графика при наведении --- */
 function highlightSeries(k){
@@ -2519,7 +2516,7 @@ function applyRange(){
   });
   renderVerdict(); renderKpis(); renderWorks(); renderSched();
   renderRisks(); renderTimeline(); renderLog(); draw();
-  renderStatus(); afterRender();
+  afterRender();
 }
 function setRange(from, to, mode){
   rFrom = from; rTo = to; rMode = mode || "custom";
