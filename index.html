@@ -3,7 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ход работ БЦ «Огни»</title>
+<title>Daily Build</title>
+<!-- Фирменный знак Daily Build. Пути относительные (./) — сайт работает и в корне домена,
+     и внутри /repository-name/ на GitHub Pages. -->
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0560ED">
+<meta name="application-name" content="Daily Build">
+<meta name="apple-mobile-web-app-title" content="Daily Build">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap">
@@ -90,6 +103,13 @@ p{margin:0}
   display:grid; grid-template-columns:minmax(0,1fr) auto; gap:var(--sp-8);
   padding:var(--sp-8) 36px; align-items:end; box-shadow:none;
 }
+/* Фирменный знак и заголовок — единый блок, выровненный по вертикальному центру.
+   Источник знака — тот же файл, что и иконка PWA, отдельной копии для шапки нет.
+   Размер задан в клампе: на телефоне уменьшается пропорционально, без обрезки. */
+.stamp-main{display:flex; align-items:center; gap:18px; min-width:0}
+.stamp-text{min-width:0}
+.brand-mark{flex:none; width:clamp(42px,4.2vw,58px); height:auto; border-radius:23%;
+  box-shadow:0 0 0 2px rgba(255,255,255,.58), 0 6px 16px -8px rgba(0,0,0,.55)}
 .stamp .eyebrow{color:rgba(255,255,255,.72)}
 .stamp h1{margin-top:10px}
 .stamp .lede{color:rgba(255,255,255,.8); margin-top:10px; max-width:62ch}
@@ -219,6 +239,21 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 @media (max-width:1180px){
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+/* Узкая полоса 901–1180 px: знак занимает место в левой колонке шапки.
+   Слегка ужимаем правые плашки, чтобы надзаголовок остался в одну строку. */
+@media (min-width:901px) and (max-width:1180px){
+  .stamp{gap:var(--sp-5)}
+  .stamp-main{gap:14px}
+  .stamp-meta{gap:var(--sp-2)}
+  .stamp-meta > div{min-width:126px; padding:14px 14px}
+}
+/* 901–1010 px: места на одну строку уже не хватает — плашки уходят под заголовок,
+   как это уже сделано на планшете. Высота шапки при этом не «прыгает». */
+@media (min-width:901px) and (max-width:1010px){
+  .stamp{grid-template-columns:1fr; align-items:start}
+  .stamp-meta{grid-auto-flow:column; justify-content:start; gap:var(--sp-3)}
+  .stamp-meta > div{min-width:150px; padding:14px 18px}
+}
 @media (max-width:900px){
   .risks{grid-template-columns:1fr}
   .stamp{grid-template-columns:1fr; padding:var(--sp-6); gap:var(--sp-6)}
@@ -237,6 +272,8 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   h2{font-size:16px}
   body{font-size:13.5px}
   .stamp{padding:22px 20px; gap:var(--sp-4); border-radius:var(--r-lg)}
+  .stamp-main{gap:13px}
+  .brand-mark{width:40px}
   .stamp .lede{font-size:13px}
   .stamp-meta{grid-auto-flow:row; grid-template-columns:1fr 1fr; gap:var(--sp-2)}
   .stamp-meta > div{padding:11px 13px; min-width:0}
@@ -351,7 +388,7 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 #sched td.num{white-space:nowrap}
 #sched td.txt.nm, #sched th.txt{min-width:0; width:20%}
 #sched .tag{white-space:nowrap}
-@media (min-width:901px){ #sched{width:100%} .panel .scroll:has(#sched){overflow-x:visible} }
+@media (min-width:1060px){ #sched{width:100%} .panel .scroll:has(#sched){overflow-x:visible} }
 @media (min-width:901px) and (max-width:1280px){ #sched{font-size:11.5px} #sched th, #sched td{padding:9px 5px} #sched .tag{padding:4px 8px} }
 .v-list{margin:0; padding:0; list-style:none; display:grid; gap:var(--sp-1)}
 .v-list li{font-size:13.5px; line-height:1.55; color:var(--ink-2); padding:11px 0 11px 20px;
@@ -443,7 +480,9 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
   .print-only{ display:block; }
   /* шапка отчёта */
   #print-head{ border-bottom:1.5pt solid #0B6BEE; padding-bottom:6pt; margin-bottom:2pt;
-               break-inside:avoid; page-break-inside:avoid; }
+               break-inside:avoid; page-break-inside:avoid; position:relative;
+               padding-left:13mm; min-height:11mm; }
+  .ph-mark{ position:absolute; left:0; top:0; width:11mm; height:11mm; border-radius:2.4mm; }
   .ph-eyebrow{ font-size:7.5pt; font-weight:600; letter-spacing:.12em;
                text-transform:uppercase; color:#8E9BB0; margin-bottom:2pt; }
   .ph-title{ font-size:17pt; font-weight:700; letter-spacing:-.02em; }
@@ -740,8 +779,12 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 
   <header class="stamp">
     <div class="stamp-main">
-      <p class="eyebrow">Нулевой цикл · КиКГЕОСТРОЙ / СТДВ / Таскшерингрус</p>
-      <h1>Ход работ <span class="ac">БЦ «Огни»</span></h1>
+      <img class="brand-mark" src="./icon-192.png" width="192" height="192"
+           alt="Daily Build" decoding="async">
+      <div class="stamp-text">
+        <p class="eyebrow">Нулевой цикл · КиКГЕОСТРОЙ / СТДВ / Таскшерингрус</p>
+        <h1>Ход работ <span class="ac">БЦ «Огни»</span></h1>
+      </div>
     </div>
     <dl class="stamp-meta">
       <div><dt>Отчётная дата</dt><dd class="mono" id="m-date"></dd></div>
@@ -2548,7 +2591,8 @@ function buildPrintCharts(){
 }
 function buildPrintHead(){
   document.getElementById("print-head").innerHTML =
-    `<p class="ph-eyebrow">Нулевой цикл · КиКГЕОСТРОЙ / СТДВ / Таскшерингрус</p>
+    `<img class="ph-mark" src="./icon-192.png" alt="">
+     <p class="ph-eyebrow">Нулевой цикл · КиКГЕОСТРОЙ / СТДВ / Таскшерингрус</p>
      <p class="ph-title">Ход работ БЦ «Огни»</p>
      <p class="ph-sub">Отчётный период ${dfull(A.period.from)} — ${dfull(A.period.to)} ·
       ${A.period.days} суток · ${A.period.reports} сводок ·
