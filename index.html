@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- Версия приложения. Меняется при каждой публикации: по ней установленная
      на iPhone web-app понимает, что вышла новая версия, и обновляется сама. -->
-<meta name="app-version" content="2026.09.29.1">
+<meta name="app-version" content="2026.09.29.3">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daily Build</title>
 <!-- Фирменный знак Daily Build. Пути относительные (./) — сайт работает и в корне домена,
@@ -783,6 +783,10 @@ footer.note{font-size:12.5px; color:var(--ink-2); display:flex; flex-direction:c
 [hidden]{display:none !important}
 .l-min{display:none}
 
+/* Журнал: с появлением колонок новых разделов таблице нужно больше ширины,
+   иначе комментарий сжимается до нечитаемого. Прокрутка — внутри карточки. */
+#log{min-width:1250px}
+
 /* ---------- каркас ---------- */
 /* Место под вертикальную прокрутку зарезервировано всегда: иначе при переходе
    на полноэкранный «Журнал», где страница не прокручивается, рабочая область
@@ -1224,8 +1228,8 @@ html{scrollbar-gutter:stable}
               <colgroup>
                 <col style="width:98px"><col style="width:90px"><col style="width:60px"><col style="width:72px">
                 <col style="width:60px"><col style="width:56px"><col style="width:56px"><col style="width:56px">
-                <col style="width:62px"><col style="width:50px"><col style="width:56px"><col style="width:60px">
-                <col style="width:56px"><col>
+                <col style="width:62px"><col style="width:50px"><col style="width:56px"><col style="width:68px">
+                <col style="width:56px"><col style="width:76px"><col style="width:60px"><col>
               </colgroup>
               <thead><tr>
                 <th>Период работ</th><th title="Дата подачи сводки">Сводка</th><th>Грунт, %</th><th>Вывоз, м³</th>
@@ -1234,6 +1238,8 @@ html{scrollbar-gutter:stable}
                 <th title="План по захваткам СВГ">План СВГ</th><th title="Стена в грунте, м³ бетона">СВГ, м³</th>
                 <th title="Буронабивные сваи, всего">БНС, шт</th><th title="План по сваям, накопительно">План БНС</th>
                 <th title="Армокаркасов всего на площадке">Каркасы</th><th title="Укрепление откоса, м²">Откос, м²</th>
+                <th title="Демонтаж форшахты, внутренняя сторона">Демонт., п.м.</th>
+                <th title="Устройство обвязочной балки">Балка, м³</th>
                 <th class="txt">Комментарий</th>
               </tr></thead>
               <tbody></tbody>
@@ -1684,41 +1690,52 @@ function computeA(rows){
 }
 
 /* ============ Разделы, открытые позже остальных ============
-   Демонтаж форшахты и устройство обвязочной балки открыты сводкой от
-   28.09.2026. По договору оба начинаются 01.10.2026, поэтому планового
-   объёма на текущую дату у них нет: весь факт до этой даты — опережение.
-   Значения лежат в тех же строках сводок, что и остальные показатели,
-   поэтому история по ним копится сама и ничего пересчитывать не нужно. */
+   Демонтаж форшахты и устройство обвязочной балки. По договору оба
+   начинаются 01.10.2026, поэтому планового объёма на текущую дату у них
+   нет: весь факт до этой даты — опережение договорного старта.
+
+   ПРАВИЛО: новый вид работ входит во ВСЕ разделы, где перечисляются работы,
+   и в каждом — со своим наполнением. Отсюда набор функций ниже: карточка
+   KPI, строка «План / факт», строка управленческого вывода, колонка журнала,
+   строка объёмов в отчёте, строка выводов отчёта и запись в рисках.
+   Значения везде берутся из одних и тех же полей строк сводок. */
 const LATE = {
   dis:  {key:"dis_pm",  name:"Демонтаж форшахты", unit:"п.м.", total:262,   dec:0,
-         start:"2026-10-01", deadline:"2027-02-01", token:"--s6"},
+         short:"Демонтаж, п.м.", start:"2026-10-01", deadline:"2027-02-01", token:"--s6"},
   beam: {key:"beam_m3", name:"Обвязочная балка",  unit:"м³", total:157.2, dec:1,
-         start:"2026-10-01", deadline:"2026-10-31", token:"--s1"}
+         short:"Балка, м³", start:"2026-10-01", deadline:"2026-10-31", token:"--s1"}
 };
-/* Факт, остаток, темп и прогноз по такому разделу внутри выбранного периода.
+const LATE_ALL = [LATE.dis, LATE.beam];
+
+/* Факт, прирост, остаток, темп и прогноз по такому разделу.
+   rows / endTo позволяют считать как по экрану (RS и выбранный период), так и
+   по произвольному набору строк — например по строкам, вошедшим в отчёт.
    Темп считается от первой сводки, где показатель появился, а не от начала
    всего наблюдения: иначе трое суток работ делились бы на два месяца.
    Прогноз отдаём только со второй сводки — по одной точке темп ещё не темп. */
-function lateFacts(w){
-  const vals = RS.filter(r => r[w.key] != null);
+function lateFacts(w, rows, endTo){
+  rows = rows || RS;
+  endTo = endTo || A.period.to;
+  const vals = rows.filter(r => r[w.key] != null);
   if(!vals.length) return null;
   const f0 = vals[0], f1 = vals[vals.length - 1];
-  let base = 0;
-  for(let j = R.indexOf(f0) - 1; j >= 0; j--) if(R[j][w.key] != null){ base = R[j][w.key]; break; }
+  let from = 0;
+  for(let j = R.indexOf(f0) - 1; j >= 0; j--) if(R[j][w.key] != null){ from = R[j][w.key]; break; }
   const fact = f1[w.key];
   const span = Math.max(1, Math.round((tms(f1.wp_end) - tms(f0.wp_start)) / DAY) + 1);
   const rem  = +(w.total - fact).toFixed(2);
-  const left = Math.max(1, Math.round((tms(w.deadline) - tms(A.period.to)) / DAY));
-  const rate = +((fact - base) / span).toFixed(2);
+  const left = Math.max(1, Math.round((tms(w.deadline) - tms(endTo)) / DAY));
+  const rate = +((fact - from) / span).toFixed(2);
   const eta  = (vals.length > 1 && rate > 0 && rem > 0)
-    ? iso(tms(A.period.to) + Math.round(rem / rate) * DAY) : null;
-  return {fact:fact, d:+(fact - base).toFixed(2), rem:rem, rate:rate,
+    ? iso(tms(endTo) + Math.round(rem / rate) * DAY) : null;
+  return {from:from, fact:fact, d:+(fact - from).toFixed(2), rem:rem, rate:rate,
           need:+(rem / left).toFixed(2), eta:eta,
           slip:eta ? Math.round((tms(eta) - tms(w.deadline)) / DAY) : null,
-          pct:+(fact / w.total * 100).toFixed(1)};
+          pct:+(fact / w.total * 100).toFixed(1),
+          started:tms(endTo) >= tms(w.start)};
 }
-/* Карточка KPI. Пока показателя в выбранном периоде нет, карточки тоже нет:
-   возвращается пустой массив и плитка не ломается. */
+
+/* --- «Обзор»: карточка KPI --- */
 function lateKpi(w, key){
   const f = lateFacts(w);
   if(!f) return [];
@@ -1730,8 +1747,8 @@ function lateKpi(w, key){
       : f.fact > 0 ? ["ok", "Начат досрочно · срок " + dfull(w.deadline)]
       : ["neutral", "Старт по договору " + dfull(w.start)]}];
 }
-/* Строка таблицы «План / факт». Колонка плана пустая: планового объёма на
-   текущую дату у раздела нет. */
+
+/* --- «Обзор»: строка таблицы «План / факт» --- */
 function lateWork(w){
   const f = lateFacts(w);
   if(!f) return null;
@@ -1746,6 +1763,56 @@ function lateWork(w){
     ev:f.rem <= 0 ? "Выполнено"
       : f.eta ? slip(-f.slip)
       : (f.fact > 0 ? "Начат досрочно" : "Старт по договору")};
+}
+
+/* --- «Обзор»: строка управленческого вывода --- */
+function lateVerdict(w){
+  const f = lateFacts(w);
+  if(!f) return "";
+  return "<li><b>" + w.name + "</b> — за период " +
+    (f.d ? dvs(f.d, w.dec) + " " + w.unit : "без прироста") +
+    " · всего " + nb(f.fact, w.dec) + " / " + nb(w.total, w.dec) + " " + w.unit +
+    " · " + nb(f.pct, 1) + " % · " +
+    (f.rem > 0 ? "остаток " + nb(f.rem, w.dec) + " " + w.unit : "раздел выполнен полностью") +
+    " · " + (f.eta ? "прогноз " + dfull(f.eta) : "договорный срок " + dfull(w.deadline)) + "</li>";
+}
+
+/* --- «Отчёт»: строка таблицы объёмов --- */
+function lateVol(w, rows, to){
+  const f = lateFacts(w, rows, to);
+  return f ? {n:w.name, u:w.unit, f:f.from, t:f.fact, d:f.d, tot:w.total, dec:w.dec} : null;
+}
+
+/* --- «Отчёт»: строка выводов --- */
+function lateLine(w, rows, to){
+  const f = lateFacts(w, rows, to);
+  if(!f) return "";
+  return "<li><b>" + w.name + "</b> — " + nb(f.fact, w.dec) + " из " + nb(w.total, w.dec) +
+    " " + w.unit + ", " + nb(f.pct, 1) + " %, за период " +
+    (f.d ? dOrDash(f.d, w.dec) + " " + w.unit : "без прироста") +
+    ", остаток " + nb(f.rem, w.dec) + " " + w.unit +
+    (/\.$/.test(w.unit) ? " " : ". ") +
+    (f.eta ? "Прогноз " + dfull(f.eta) + " при договорном сроке " + dfull(w.deadline) + "."
+           : "Договорный срок " + dfull(w.deadline) + ".") + "</li>";
+}
+
+/* --- «Риски»: запись появляется только когда срок под угрозой либо работы
+       не начаты после наступления договорного старта. Пока раздел идёт в
+       графике, в рисках его нет — как и требует правило снятия рисков. --- */
+function lateRisk(w){
+  const f = lateFacts(w);
+  if(!f || f.rem <= 0) return null;
+  if(f.eta && f.slip > 0)
+    return [w.name + " · прогноз позже срока", "Высокий", "--crit",
+      "Факт " + nb(f.fact, w.dec) + " из " + nb(w.total, w.dec) + " " + w.unit +
+      ", темп " + nb(f.rate, 2) + " " + w.unit + "/сут. Прогноз " + dfull(f.eta) +
+      " при договорном сроке " + dfull(w.deadline) + " — требуется " +
+      nb(f.need, 2) + " " + w.unit + "/сут."];
+  if(f.started && f.fact === 0)
+    return [w.name + " · работы не начаты", "Средний", "--warn",
+      "Договорный старт " + dfull(w.start) + " наступил, объём к предъявлению не набран. " +
+      "До срока " + dfull(w.deadline) + " требуется " + nb(f.need, 2) + " " + w.unit + "/сут."];
+  return null;
 }
 
 /* ============ управленческий вывод ============ */
@@ -1764,6 +1831,7 @@ document.getElementById("verdict-body").innerHTML = `
     <li><b>Устройство форшахты</b> — за период ${A.period.fs_pm_d ? dvs(A.period.fs_pm_d,1) + " п.м." : "без прироста"} ·
         всего ${nb(A.fs.pm,1)} / ${fmt(A.fs.pm_total)} п.м. · ${nb(A.fs.pct,1)} % ·
         ${A.fs.pm_rem > 0 ? `остаток ${nb(A.fs.pm_rem,1)} п.м., последняя захватка` : `раздел выполнен полностью`}</li>
+    ${LATE_ALL.map(lateVerdict).join("")}
     <li><b>Укрепление откоса</b> — за период ${A.period.slope_d ? dvs(A.period.slope_d) + " м²" : "без прироста"} ·
         всего ${fmt(A.slope.fact)} / ${fmt(A.slope.total)} м² ·
         ${nb(A.slope.fact / A.slope.total * 100,1)} % · нужно ${nb(A.slope.need,1)} м²/сут. до 30.09, факт ${nb(A.slope.r7,1)}</li>
@@ -1924,8 +1992,9 @@ function renderLog(){
     ${cell("План БНС", r.plan_bns === 0 ? "—" : nb(r.plan_bns_total,1), "color:var(--ink-3)")}
     ${cell("Каркасы", r.cages_total == null ? "—" : nb(r.cages_total,1))}
     ${cell("Откос, м²", r.slope === null || r.slope === undefined ? "—" : fmt(r.slope))}
+    ${LATE_ALL.map(w => cell(w.short, r[w.key] == null ? "—" : nb(r[w.key], w.dec))).join("")}
     <td class="txt" data-label="Комментарий">${r.note || ""}</td>
-  </tr>`).join("") || `<tr><td colspan="14" class="txt">Ничего не найдено — измените запрос.</td></tr>`;
+  </tr>`).join("") || `<tr><td colspan="16" class="txt">Ничего не найдено — измените запрос.</td></tr>`;
 }
 const periods = [["all","Весь период"],["aug","Июль — август"],["sep","Сентябрь"]];
 document.getElementById("period-tabs").innerHTML = periods.map(([k,l],i) =>
@@ -1939,32 +2008,67 @@ document.getElementById("period-tabs").addEventListener("click", e => {
 document.getElementById("q").addEventListener("input", e => { query = e.target.value.toLowerCase(); renderLog(); });
 /* ============ Риски ============ */
 function renderRisks(){
-/* Происшествие, зафиксированное в сводке, поднимается в блок рисков за выбранный период. */
-const inc = [...RS].reverse().find(r => r.incident);
+/* ПРАВИЛО СНЯТИЯ РИСКОВ. Риск живёт в разделе, пока он действующий. Как
+   только он отработан — отставание закрыто, запас восстановлен, объём
+   выполнен, происшествие осталось позади — запись уходит из «Рисков», но
+   остаётся в «Хронологии» как событие: история не теряется, а рабочий
+   список не превращается в архив. Поэтому у каждой записи ниже есть явное
+   условие актуальности, а не безусловное добавление. */
 const risks = [];
-if(inc) risks.push(["Происшествие · опрокидывание буровой установки", "Высокий", "--crit",
-  inc.incident + ". Зафиксировано сводкой от " + dfull(inc.d) + " за " + wpFull(inc) +
-  ". Требуется подтвердить состав работоспособной техники и срок восстановления: в парке две буровые установки, при выбытии одной требуемый темп 2,25 сваи/сут удваивается на оставшуюся."]);
-risks.push(...[
+const daysBack = d => Math.round((tms(A.period.to) - tms(d)) / DAY);
+
+/* Происшествие — риск, пока оно свежее. Дальше это уже хронология. */
+const INC_DAYS = 7;
+const inc = [...RS].reverse().find(r => r.incident && daysBack(r.wp_end) <= INC_DAYS);
+if(inc){
+  const nm = inc.incident.replace(/,.*$/, "");
+  risks.push(["Происшествие · " + nm.charAt(0).toLowerCase() + nm.slice(1), "Высокий", "--crit",
+    inc.incident + ". Зафиксировано сводкой от " + dfull(inc.d) + " за " + wpFull(inc) +
+    ". Требуется подтвердить состав работоспособной техники и срок восстановления: в парке две буровые установки, при выбытии одной требуемый темп удваивается на оставшуюся."]);
+}
+
+/* БНС — пока факт ниже плана. */
+if(A.bns.dev < 0) risks.push(
   ["БНС · отставание " + Math.abs(A.bns.dev) + " " + plural(Math.abs(A.bns.dev),"свая","сваи","свай") + " от плана",
    "Высокий", "--serious",
    "Факт " + A.bns.fact + " при плане " + nb(A.bns.plan,0) + ". Темп за период " + nb(A.bns.rate_week,1) + " свай/нед. при плановых " +
    A.bns.plan_week + ". Прогноз " + dfull(A.bns.eta_plan) + " — в срок только при выполнении недельного графика, включая усиление до " +
    A.bns.peak_week + " " + plural(A.bns.peak_week,"сваи","свай","свай") + "/нед. на " + A.bns.peak_n + " " +
-   plural(A.bns.peak_n,"неделе","неделях","неделях") + " " + dshort(A.bns.peak_from) + "–" + dshort(A.bns.peak_to) + "."],
+   plural(A.bns.peak_n,"неделе","неделях","неделях") + " " + dshort(A.bns.peak_from) + "–" + dshort(A.bns.peak_to) + "."]);
+
+/* Армокаркасы — пока свободный запас меньше недельного объёма монтажа. */
+if(A.cages.spare < A.bns.plan_week) risks.push(
   ["Армокаркасы · свободный запас " + nb(A.cages.spare,0) + " шт.", "Высокий", "--crit",
    "Поставка " + nb(A.period.cages_week,1) + " шт./нед. за период — вровень с монтажом, запас не восстанавливается. На усиленные недели ноября требуется " +
-   A.bns.peak_week + " шт./нед."],
+   A.bns.peak_week + " шт./нед."]);
+
+/* Откос — пока объём не закрыт. */
+if(A.slope.rem > 0) risks.push(
   ["Откос · темп ниже требуемого", A.slope.r7 >= A.slope.need ? "Средний" : "Высокий",
    A.slope.r7 >= A.slope.need ? "--warn" : "--crit",
    "Факт за период " + nb(A.slope.avg_period,1) + " м²/сут., за 7 суток " + nb(A.slope.r7,1) + " при необходимых " + nb(A.slope.need,1) + " до 30.09. Остаток " + fmt(A.slope.rem) +
-   " м² — около " + nb(A.slope.shifts,1) + " смен в режиме конца августа."],
-  ["СВГ · график выдерживается", "Низкий", "--good",
-   "Опережение " + nb(A.dw.dev,1) + " " + plural(A.dw.dev,"захватка","захватки","захваток") + ", прогноз " + dfull(A.dw.eta) +
-   " при сроке " + dfull(A.dw.plan_end) + ". Резерв кранов и бригад для ускорения свай."],
+   " м² — около " + nb(A.slope.shifts,1) + " смен в режиме конца августа."]);
+
+/* СВГ — пока раздел не завершён; тон записи зависит от знака отклонения. */
+if(A.dw.rem > 0) risks.push(
+  [A.dw.dev >= 0 ? "СВГ · график выдерживается"
+                 : "СВГ · отставание " + nb(Math.abs(A.dw.dev),1) + " захв. от плана",
+   A.dw.dev >= 0 ? "Низкий" : "Высокий",
+   A.dw.dev >= 0 ? "--good" : "--serious",
+   (A.dw.dev >= 0 ? "Опережение " : "Отставание ") + nb(Math.abs(A.dw.dev),1) + " " +
+   plural(Math.abs(A.dw.dev),"захватка","захватки","захваток") + ", прогноз " + dfull(A.dw.eta) +
+   " при сроке " + dfull(A.dw.plan_end) + ". Остаток " + A.dw.rem + " из 44 захваток." +
+   (A.dw.dev >= 0 ? " Резерв кранов и бригад для ускорения свай." : "")]);
+
+/* Накопление грунта на площадке — пока об этом пишут сводки периода. */
+const jam = [...RS].reverse().find(r =>
+  /накоплени\w*\s+грунта|рабочей\s+площад/i.test(r.note || "") && daysBack(r.wp_end) <= 7);
+if(jam) risks.push(
   ["Площадка · накопление грунта от бурения", "Средний", "--warn",
-   "Сокращается рабочая площадь, что ограничивает работу буровых установок и кранов. Вывоз выведен из суточной отчётности 01.09."],
-]);
+   "Сокращается рабочая площадь, что ограничивает работу буровых установок и кранов. Отмечено сводкой от " + dfull(jam.d) + "."]);
+
+/* Разделы с договорным сроком — запись появляется только при угрозе срока. */
+LATE_ALL.forEach(w => { const r = lateRisk(w); if(r) risks.push(r); });
 LAST_RISKS = risks; NEW_CRIT = newCritRisks(risks);
 document.getElementById("risks").innerHTML = risks.map(([n,l,c,t],i) => `
   <article class="risk soft" style="--lvl:var(${c}); --i:${i}">
@@ -1972,7 +2076,9 @@ document.getElementById("risks").innerHTML = risks.map(([n,l,c,t],i) => `
     <p><span class="tag" style="color:var(${c})"><i class="lvl-dot${
       c === "--crit" && NEW_CRIT.has(n) ? " pulse" : ""}"></i>${l}</span></p>
     <p>${t}</p>
-  </article>`).join("");
+  </article>`).join("") ||
+  `<p class="chart-note">Действующих рисков за выбранный период нет.
+   Отработанные риски остаются в разделе «Хронология».</p>`;
 }
 
 /* ============ Хронология ============ */
@@ -3179,6 +3285,7 @@ function renderReport(rp){
     {n:"Укрепление откоса", u:"м²", f:p.slope_from, t:p.slope_to, d:p.slope_d, tot:T.slope_m2, dec:0},
     {n:"Армокаркасы на площадке", u:"шт", f:p.cages_from, t:p.cages_total, d:p.cages_d, tot:null, dec:0},
   ];
+  LATE_ALL.forEach(w => { const v = lateVol(w, rp.rows, p.to); if(v) vols.push(v); });
   if(p.soil_haul) vols.push({n:"Вывоз грунта, попутный", u:"м³", f:null, t:null, d:p.soil_haul, tot:null, dec:0});
   const volRows = vols.map(v => `<tr>
       <td class="txt nm">${v.n}</td>
@@ -3263,6 +3370,7 @@ function renderReport(rp){
       <li><b>Стена в грунте</b> — факт ${a.dw.fact} из 44 при плане ${nb(a.dw.plan)}, ${dvs(a.dw.dev,1)} захв.
           Темп за период ${nb(a.dw.avg_week,1)} захв./нед. Прогноз ${dfull(a.dw.eta)} при сроке ${dfull(a.dw.plan_end)}.</li>
       <li><b>Форшахта</b> — ${nb(a.fs.pm,1)} из ${fmt(a.fs.pm_total)} п.м., ${nb(a.fs.pct,1)} %, остаток ${nb(a.fs.pm_rem,1)} п.м.</li>
+      ${LATE_ALL.map(w => lateLine(w, rp.rows, p.to)).join("")}
       <li><b>Укрепление откоса</b> — ${fmt(a.slope.fact)} из ${fmt(a.slope.total)} м², за период ${dOrDash(p.slope_d)} м².
           До 30.09 требуется ${nb(a.slope.need,1)} м²/сут.</li>
       <li><b>Разработка и вывоз грунта</b> — ${p.soil_d == null ? "сводок за период нет, раздел закрыт " + dfull(a.soil.close)
