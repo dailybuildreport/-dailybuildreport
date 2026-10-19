@@ -1486,6 +1486,8 @@ function bnsWeeks(endT){
   return out;
 }
 const DW_START = tms("2026-07-28"), DW_PLAN_END = tms(T.dw_plan_end);
+/* фактическое завершение СВГ: период работ первой сводки с 44 захватками */
+const DW_DONE = (R.find(r => r.dw_zah >= T.dw_zah) || {}).wp_end || null;
 const planZah = t => +Math.min(44, 15 + 2.5 * ((t - DW_START)/DAY) / 7).toFixed(2);
 
 /* ============ ПРАВИЛО ПРИРОСТА НАКОПИТЕЛЬНЫХ ПОКАЗАТЕЛЕЙ ============
@@ -1750,6 +1752,15 @@ const LATE = {
    демонтаж форшахты → демонтаж верха СВГ → устройство балки, то есть
    технологическая цепочка подготовки под обвязочную балку. */
 const LATE_ALL = [LATE.dis, LATE.svg, LATE.beam];
+
+/* Доли выполнения для совмещённого графика. Пишутся в строки сводок, чтобы
+   график читал их как обычный ряд; считаются от объёма своего раздела. */
+for(const r of R){
+  r.beam_pct = r[LATE.beam.key] == null ? null
+    : +(r[LATE.beam.key] / LATE.beam.total * 100).toFixed(2);
+  r.dis_pct = r[LATE.dis.key] == null ? null
+    : +(r[LATE.dis.key] / LATE.dis.total * 100).toFixed(2);
+}
 
 /* Факт, прирост, остаток, темп и прогноз по такому разделу.
    rows / endTo позволяют считать как по экрану (RS и выбранный период), так и
@@ -2315,7 +2326,11 @@ document.getElementById("tests-note").textContent =
   "Сваи ОП остановлены при осадке более 40–47 мм; сваи ОК — при подъёме 50 мм. Испытательная нагрузка ОП достигала 1 160 т.";
 
 /* ============ Графики ============ */
-function buildCH(){ return [
+function buildCH(){
+  /* факты разделов для подписи совмещённого графика: считаются теми же
+     функциями, что и все прочие показатели этих разделов */
+  const bF = lateFacts(LATE.beam), dF = lateFacts(LATE.dis);
+  return [
   {id:"bns", name:"БНС — план / факт", type:"time", unit:"шт",
    x0:tms("2026-08-01"), x1:Math.max(BNS_END, tms(A.bns.eta_plan || "2026-12-06") + 3*DAY), big:true,
    callout:{planFn:planBnsTotal, factKey:"bns_rep", unit:"свай"},
@@ -2332,12 +2347,35 @@ function buildCH(){ return [
    x0:DW_START, x1:DW_PLAN_END,
    callout:{planFn:planZah, factKey:"dw_zah", unit:"захв."},
    note:"План — равномерный рост 2,5 захватки в неделю от 15 захваток на 28.07 до 44 к " + dfull(A.dw.plan_end) +
-        ". Факт " + A.dw.fact + " при плане " + nb(A.dw.plan) + ", темп " + nb(A.dw.avg_week,1) +
-        " захв./нед. Пунктир после отчётной даты — прогноз " + dfull(A.dw.eta) + ".",
-   forecast:{factKey:"dw_zah", eta:() => A.dw.eta, target:44, token:"--s3", k:"dw"},
+        (A.dw.rem <= 0
+          ? ". Раздел выполнен полностью: 44 захватки и " + nb(A.dw.m3,2) +
+            " м³, работы завершены " + dfull(DW_DONE) + " — на " +
+            nSut(Math.round((tms(A.dw.plan_end) - tms(DW_DONE)) / DAY)) +
+            " раньше договорного срока. Средний темп " + nb(A.dw.avg_week,1) +
+            " захв./нед. График зафиксирован по факту, прогноз не строится."
+          : ". Факт " + A.dw.fact + " при плане " + nb(A.dw.plan) + ", темп " + nb(A.dw.avg_week,1) +
+            " захв./нед. Пунктир после отчётной даты — прогноз " + dfull(A.dw.eta) + "."),
+   ...(A.dw.rem > 0
+     ? {forecast:{factKey:"dw_zah", eta:() => A.dw.eta, target:44, token:"--s3", k:"dw"}}
+     : {}),
    rateText:() => nb(A.dw.avg_week, 1) + " захв./нед.",
    sets:[{label:"План, 2,5 захватки в неделю", token:"--s2", fn:planZah, dashed:true, k:"dw_plan"},
          {label:"Факт, захваток", token:"--s3", key:"dw_zah", k:"dw"}]},
+  {id:"beam", name:"Балка и демонтаж форшахты", type:"time", unit:"%",
+   x0:tms("2026-09-25"),
+   x1:Math.max(tms(LATE.beam.deadline) + 5*DAY, tms(last.wp_end) + 5*DAY),
+   note:"Два раздела подготовки и устройства обвязочной балки на одной шкале. " +
+        "Единицы у них разные — м³ у балки и п.м. у демонтажа форшахты, — поэтому " +
+        "сопоставление идёт в долях от собственного объёма раздела: " +
+        nb(LATE.beam.total,1) + " м³ и " + nb(LATE.dis.total,0) + " п.м. " +
+        "Балка: " + nb(bF ? bF.fact : 0, 1) + " из " + nb(LATE.beam.total,1) + " м³ (" +
+        nb(bF ? bF.pct : 0, 1) + " %), договорный срок " + dfull(LATE.beam.deadline) +
+        ", график работ со сроком 30.10.2026. Демонтаж форшахты: " +
+        nb(dF ? dF.fact : 0, 0) + " из " + nb(LATE.dis.total,0) + " п.м. (" +
+        nb(dF ? dF.pct : 0, 1) + " %), договорный срок " + dfull(LATE.dis.deadline) + ".",
+   rateText:() => { const f = lateFacts(LATE.beam); return nb(f ? f.rate : 0, 2) + " м³/сут."; },
+   sets:[{label:"Обвязочная балка, % объёма", token:"--s1", key:"beam_pct", k:"beam"},
+         {label:"Демонтаж форшахты, % объёма", token:"--s6", key:"dis_pct", k:"dis"}]},
   {id:"soil", name:"Вывоз грунта", type:"bar", unit:"м³",
    note:"Столбец — прирост к предыдущей сводке, вторая серия — тот же прирост, делённый на число суток интервала: понедельничная сводка охватывает три дня, поэтому её столбец выше. После " +
         dfull(A.soil.close) + " геодезический объём пройден, дальнейший вывоз — попутный грунт от экскавации СВГ и БНС.",
